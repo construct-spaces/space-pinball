@@ -57,13 +57,36 @@ export class EditorRenderer {
     this.gridLayer.addChild(g)
   }
 
-  render(layout: Layout, selectedId?: string): void {
+  render(layout: Layout, selectedId?: string, mode?: any): void {
     this.bodyLayer.removeChildren()
     for (const e of layout.elements) {
       const g = new Graphics()
       this.drawElement(g, e)
       this.bodyLayer.addChild(g)
     }
+    
+    // Draw active polyline being built
+    if (mode && typeof mode === 'object' && mode.kind === 'polyline' && mode.points.length > 0) {
+      const activeGfx = new Graphics()
+      activeGfx.moveTo(mode.points[0].x, mode.points[0].y)
+      for (let i = 1; i < mode.points.length; i++) {
+        activeGfx.lineTo(mode.points[i].x, mode.points[i].y)
+      }
+      activeGfx.stroke({ color: 0x00e5ff, width: 4, alpha: 0.8 })
+      
+      for (const p of mode.points) {
+        activeGfx.circle(p.x, p.y, 4).fill({ color: 0xffffff })
+      }
+      this.bodyLayer.addChild(activeGfx)
+    }
+
+    // Decoration previews (no animation in editor)
+    for (const d of layout.decorations ?? []) {
+      const g = new Graphics()
+      this.drawDecor(g, d)
+      this.bodyLayer.addChild(g)
+    }
+
     // Ball-start marker (ghost ball)
     const bs = new Graphics()
     bs.circle(0, 0, BALL_RADIUS)
@@ -75,6 +98,22 @@ export class EditorRenderer {
     this.drawSelection(layout, selectedId)
   }
 
+  private drawDecor(g: Graphics, d: import('./types').Decor): void {
+    const color = parseInt(d.color.replace('#', ''), 16)
+    if (d.kind === 'light') {
+      g.circle(0, 0, d.r).fill({ color, alpha: d.intensity * 0.5 })
+      g.circle(0, 0, d.r * 0.5).fill({ color, alpha: d.intensity })
+      g.position.set(d.x, d.y)
+    } else if (d.kind === 'text') {
+      g.rect(-40, -12, 80, 24).stroke({ color, width: 1, alpha: 0.6 })
+      g.position.set(d.x, d.y)
+    } else if (d.kind === 'emitter') {
+      g.circle(0, 0, 12).fill({ color, alpha: 0.4 })
+      g.circle(0, 0, 4).fill({ color })
+      g.position.set(d.x, d.y)
+    }
+  }
+
   private drawElement(g: Graphics, e: Element): void {
     const fill = colorFor(e.kind as BodyKind)
     if (RECT_KINDS.has(e.kind)) {
@@ -83,8 +122,12 @@ export class EditorRenderer {
       g.position.set(r.x, r.y)
       g.rotation = r.angle
     } else if (CIRCLE_KINDS.has(e.kind)) {
-      const c = e as Extract<Element, { kind: 'bumper' | 'peg' }>
+      const c = e as Extract<Element, { kind: 'bumper' | 'peg' | 'teleport' }>
       g.circle(0, 0, c.r).fill({ color: fill })
+      if (c.kind === 'teleport') {
+        g.circle(0, 0, c.r * 0.7).fill({ color: 0x05050d, alpha: 0.8 })
+        g.circle(0, 0, c.r * 0.3).fill({ color: fill, alpha: 0.5 })
+      }
       g.position.set(c.x, c.y)
     } else if (FLIPPER_KINDS.has(e.kind)) {
       const f = e as Extract<Element, { kind: 'flipperLeft' | 'flipperRight' }>
@@ -118,7 +161,17 @@ export class EditorRenderer {
     }
     const elements = layout.elements
     const e = elements.find((x) => x.id === selectedId)
-    if (!e) return
+    if (!e) {
+      const d = layout.decorations?.find((x) => x.id === selectedId)
+      if (!d) return
+      const r = d.kind === 'light' ? d.r + 4
+              : d.kind === 'text' ? 44
+              : 16
+      this.selectionGfx.circle(0, 0, r).stroke({ color: SELECT_COLOR, width: 2 })
+      this.selectionGfx.position.set(d.x, d.y)
+      this.selectionGfx.rotation = 0
+      return
+    }
     if (RECT_KINDS.has(e.kind)) {
       const r = e as Extract<Element, { kind: 'wall' | 'slingshot' | 'rollover' | 'drain' }>
       this.selectionGfx
@@ -127,7 +180,7 @@ export class EditorRenderer {
       this.selectionGfx.position.set(r.x, r.y)
       this.selectionGfx.rotation = r.angle
     } else if (CIRCLE_KINDS.has(e.kind)) {
-      const c = e as Extract<Element, { kind: 'bumper' | 'peg' }>
+      const c = e as Extract<Element, { kind: 'bumper' | 'peg' | 'teleport' }>
       this.selectionGfx
         .circle(0, 0, c.r + 3)
         .stroke({ color: SELECT_COLOR, width: 2 })
