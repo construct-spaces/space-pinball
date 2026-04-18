@@ -130,7 +130,9 @@ export class Renderer {
     // Plunger visual
     const pv = physics.table.plungerVisual
     const charge = this.chargeRef.charge
-    const drop = Math.min(12 * charge, 10)
+    // Cap drop at 6 px so the plunger never visually penetrates the lane floor
+    // (floor top at y≈880, plunger top y=874, h=14 → bottom at 888 + drop).
+    const drop = Math.min(12 * charge, 6)
     this.plungerGfx
       .clear()
       .rect(pv.x - pv.w / 2, pv.y + drop, pv.w, pv.h)

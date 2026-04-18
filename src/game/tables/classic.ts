@@ -105,7 +105,11 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   bodies.push(fixedRect(world, 'leftWall', 'wall', wallT / 2, H / 2, wallT, H))
   bodies.push(fixedRect(world, 'rightWall', 'wall', W - wallT / 2, H / 2, wallT, H))
 
-  // Top arch — 8 segs along an arc, replaces flat top wall
+  // Flat top wall ABOVE the arch — guarantees no escape past arch endpoints,
+  // since the arc (r=270 from (290,290)) cannot reach playfield corners.
+  bodies.push(fixedRect(world, 'topWall', 'wall', W / 2, wallT / 2, W, wallT))
+
+  // Top arch — 8 segs along an arc (visual + deflective).
   {
     const cx = 290, cy = 290, r = 270
     const startDeg = 200, endDeg = 340
@@ -141,9 +145,10 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   )
   // Lane floor
   bodies.push(fixedRect(world, 'laneFloor', 'wall', 550, H - 12, 44, 16))
-  // One-way lip on inner side of divider top
+  // One-way lip on inner side of divider top — widened to reach divider face
+  // so a returning ball cannot squeeze between the lip and the divider.
   bodies.push(
-    fixedRect(world, 'laneLip', 'wall', 508, 140, 18, 4, { angle: -1.0, restitution: 0.2 }),
+    fixedRect(world, 'laneLip', 'wall', 503, 140, 28, 4, { angle: -1.0, restitution: 0.2 }),
   )
 
   // Curved exit rail (plunger lane → upper playfield)
