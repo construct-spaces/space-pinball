@@ -1,17 +1,17 @@
-export const PLAYFIELD_WIDTH = 500
-export const PLAYFIELD_HEIGHT = 800
+export const PLAYFIELD_WIDTH = 600
+export const PLAYFIELD_HEIGHT = 900
 
 export const BALL_RADIUS = 12
-// Ball starts in the plunger lane (right side). Lane inner x is 441..480, ball center 460.
-export const BALL_START = { x: 460, y: PLAYFIELD_HEIGHT - 80 }
+// Ball starts in the plunger lane (right side). Lane inner x ∈ [528, 572], ball center 550.
+export const BALL_START = { x: 550, y: 820 }
 
 export const STARTING_BALLS = 3
 
 export const POINTS = {
   BUMPER: 100,
   SLINGSHOT: 50,
-  DROP_TARGET: 25,
-  DROP_TARGET_BANK: 500,
+  ROLLOVER: 10,
+  ROLLOVER_BANK: 500,
 } as const
 
 export const PHYSICS_STEP_MS = 1000 / 60
