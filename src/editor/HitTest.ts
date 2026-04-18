@@ -1,5 +1,6 @@
 import {
   type Element,
+  type Decor,
   RECT_KINDS,
   CIRCLE_KINDS,
   FLIPPER_KINDS,
@@ -60,7 +61,7 @@ export function hitTest(
       const r = e as Extract<Element, { kind: 'wall' | 'slingshot' | 'rollover' | 'drain' }>
       if (pointInRect(point.x, point.y, r.x, r.y, r.w, r.h, r.angle)) return e
     } else if (CIRCLE_KINDS.has(e.kind)) {
-      const c = e as Extract<Element, { kind: 'bumper' | 'peg' }>
+      const c = e as Extract<Element, { kind: 'bumper' | 'peg' | 'teleport' }>
       if (pointInCircle(point.x, point.y, c.x, c.y, c.r)) return e
     } else if (FLIPPER_KINDS.has(e.kind)) {
       const f = e as Extract<Element, { kind: 'flipperLeft' | 'flipperRight' }>
@@ -74,6 +75,35 @@ export function hitTest(
         const a = p.points[j]
         const b = p.points[j + 1]
         if (distanceToSegment(point.x, point.y, a.x, a.y, b.x, b.y) <= half) return e
+      }
+    }
+  }
+  return undefined
+}
+
+const TEXT_HIT_W = 80
+const TEXT_HIT_H = 24
+
+export function hitTestDecor(
+  point: { x: number; y: number },
+  decorations: Decor[] | undefined,
+): Decor | undefined {
+  if (!decorations) return undefined
+  for (let i = decorations.length - 1; i >= 0; i--) {
+    const d = decorations[i]
+    if (d.kind === 'light' || d.kind === 'emitter') {
+      const r = d.kind === 'light' ? d.r : 12
+      const dx = point.x - d.x
+      const dy = point.y - d.y
+      if (dx * dx + dy * dy <= r * r) return d
+    } else if (d.kind === 'text') {
+      if (
+        point.x >= d.x - TEXT_HIT_W / 2 &&
+        point.x <= d.x + TEXT_HIT_W / 2 &&
+        point.y >= d.y - TEXT_HIT_H / 2 &&
+        point.y <= d.y + TEXT_HIT_H / 2
+      ) {
+        return d
       }
     }
   }
