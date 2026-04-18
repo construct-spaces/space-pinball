@@ -62,6 +62,7 @@ export function buildCustomTable(world: RAPIER.World, layout: Layout): CustomTab
       case 'arcRail':
       case 'gateRail': {
         const restitution = e.kind === 'arcRail' ? 0.6 : 0.2
+        const segKind = e.kind === 'arcRail' ? 'arcRail' : 'wall'
         for (let i = 0; i < e.points.length - 1; i++) {
           const a = e.points[i]
           const b = e.points[i + 1]
@@ -72,7 +73,7 @@ export function buildCustomTable(world: RAPIER.World, layout: Layout): CustomTab
           const len = Math.hypot(dx, dy)
           const ang = Math.atan2(dy, dx)
           bodies.push(
-            fixedRect(world, `${e.id}-${i}`, e.kind, cx, cy, len, e.thickness, {
+            fixedRect(world, `${e.id}-${i}`, segKind, cx, cy, len, e.thickness, {
               angle: ang,
               restitution,
             }),
