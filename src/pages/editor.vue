@@ -11,16 +11,26 @@ const store = useEditorStore()
 
 <template>
   <div class="editor">
-    <aside class="col left">
-      <LayoutsSidebar />
-      <Palette />
-    </aside>
-    <main class="canvas-wrap">
-      <EditorCanvas />
-    </main>
-    <aside class="col right">
-      <PropertyPanel />
-    </aside>
+    <div class="top-bar">
+      <div class="brand">
+        <span class="logo">🚀</span>
+        <h1>Space Pinball Editor</h1>
+      </div>
+      <div class="layouts-section">
+        <LayoutsSidebar />
+      </div>
+    </div>
+    <div class="main-workspace">
+      <aside class="col left">
+        <Palette />
+      </aside>
+      <main class="canvas-wrap">
+        <EditorCanvas />
+      </main>
+      <aside class="col right">
+        <PropertyPanel />
+      </aside>
+    </div>
     <TestPlayModal v-if="store.state.testPlayOpen" />
   </div>
 </template>
@@ -28,28 +38,77 @@ const store = useEditorStore()
 <style scoped>
 .editor {
   display: flex;
-  min-height: 100vh;
-  background: #05050d;
-  color: #ddd;
+  flex-direction: column;
+  height: 100vh;
+  background: #0a0a0f;
+  color: #e2e8f0;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 20px;
+  background: #13131c;
+  border-bottom: 1px solid #2a2a35;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  font-size: 24px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+
+.layouts-section {
+  display: flex;
+  align-items: center;
+}
+
+.main-workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
 .col {
   display: flex;
   flex-direction: column;
+  background: #13131c;
+  overflow-y: auto;
 }
+
 .col.left {
-  min-width: 200px;
-  border-right: 1px solid #222;
+  width: 240px;
+  border-right: 1px solid #2a2a35;
 }
+
 .col.right {
-  min-width: 220px;
-  border-left: 1px solid #222;
+  width: 300px;
+  border-left: 1px solid #2a2a35;
 }
+
 .canvas-wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px;
+  justify-content: center;
+  padding: 24px;
   overflow: auto;
+  background: radial-gradient(circle at center, #1a1a24 0%, #0a0a0f 100%);
 }
 </style>

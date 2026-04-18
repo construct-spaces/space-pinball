@@ -13,6 +13,7 @@ export interface ClassicTable {
   flipperRight: TableBody
   drain: TableBody
   rolloverById: Map<string, TableBody>
+  teleportById: Map<string, TableBody>
   leftPivot: { x: number; y: number }
   rightPivot: { x: number; y: number }
   plungerVisual: { x: number; y: number; w: number; h: number }
@@ -83,6 +84,7 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
 
   // Top rollover sensor zones (3) — sit between the posts at y=140.
   const rolloverById = new Map<string, TableBody>()
+  const teleportById = new Map<string, TableBody>()
   for (const [i, x] of [220, 260, 300].entries()) {
     const id = `roll${i}`
     const tb = fixedRect(world, id, 'rollover', x, 140, 28, 30, { sensor: true })
@@ -211,6 +213,7 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
     flipperRight,
     drain,
     rolloverById,
+    teleportById,
     leftPivot,
     rightPivot,
     // Plunger top sits at lane-floor top (y=880). Ball at rest center y=868

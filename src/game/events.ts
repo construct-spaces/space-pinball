@@ -14,6 +14,7 @@ export type GameEventMap = {
   comboChanged: { combo: number; multiplier: number }
   chargeChanged: { charge: number }
   rolloverLit: { id: string }
+  teleport: { fromX: number; fromY: number; toX: number; toY: number }
 }
 
 type Handler<T> = (payload: T) => void

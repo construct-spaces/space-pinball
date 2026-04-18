@@ -2,6 +2,7 @@
 import { onMounted, onBeforeUnmount, ref, useTemplateRef } from 'vue'
 import { PinballGame } from '../../game/PinballGame'
 import { useEditorStore } from '../EditorState'
+import { X, Trophy, Disc3, Rocket } from 'lucide-vue-next'
 
 const store = useEditorStore()
 const canvasRef = useTemplateRef<HTMLCanvasElement>('canvasRef')
@@ -64,18 +65,35 @@ function handleClose(): void {
   <div class="modal-root" @click.self="handleClose">
     <div class="modal">
       <header class="bar">
-        <span class="title">Testing: {{ store.layout.name }}</span>
-        <span class="score">Score: {{ score }}</span>
-        <span class="balls">Balls: {{ balls }}</span>
-        <button class="close" @click="handleClose">✕ Close (Esc)</button>
+        <div class="title-group">
+          <span class="title">Testing: {{ store.layout.name }}</span>
+        </div>
+        <div class="stats-group">
+          <div class="stat-badge">
+            <Trophy :size="16" class="stat-icon" />
+            <span class="stat-label">Score</span>
+            <span class="stat-value">{{ score }}</span>
+          </div>
+          <div class="stat-badge">
+            <Disc3 :size="16" class="stat-icon" />
+            <span class="stat-label">Balls</span>
+            <span class="stat-value">{{ balls }}</span>
+          </div>
+        </div>
+        <button class="close-btn" @click="handleClose">
+          <X :size="16" /> Close <span class="esc-hint">Esc</span>
+        </button>
       </header>
       <div ref="stageRef" class="stage" tabindex="0" @click="stageRef?.focus()">
         <canvas ref="canvasRef" />
         <div v-if="!gameStarted" class="overlay" @click.stop="handleStart">
-          <div class="card">
-            <h2>Ready?</h2>
-            <p>Click or press Space to launch</p>
-            <button class="btn" @click.stop="handleStart">Launch</button>
+          <div class="launch-card">
+            <div class="icon-wrap">
+              <Rocket :size="32" class="launch-icon" />
+            </div>
+            <h2>Ready for Launch</h2>
+            <p>Click or press Space to start the game</p>
+            <button class="launch-btn" @click.stop="handleStart">Launch Ball</button>
           </div>
         </div>
       </div>
@@ -87,46 +105,98 @@ function handleClose(): void {
 .modal-root {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
 .modal {
-  background: #0b0b12;
-  border: 1px solid #333;
+  background: #0a0a0f;
+  border: 1px solid #2a2a35;
   border-radius: 12px;
   width: 90vw;
   height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 .bar {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 8px 12px;
-  background: #111;
-  border-bottom: 1px solid #222;
-  color: #ddd;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: #13131c;
+  border-bottom: 1px solid #2a2a35;
+  color: #e2e8f0;
+}
+.title-group {
+  flex: 1;
 }
 .title {
   font-weight: 600;
-  flex: 1;
+  font-size: 15px;
+  color: #f8fafc;
 }
-.score, .balls {
+.stats-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-right: 24px;
+}
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1e1e2d;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #2a2a35;
+}
+.stat-icon {
+  color: #00e5ff;
+}
+.stat-label {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.stat-value {
   font-variant-numeric: tabular-nums;
-  color: #9be7ff;
+  font-weight: 700;
+  color: #f8fafc;
 }
-.close {
-  background: #4a1f1f;
-  color: #fff;
-  border: 0;
+.close-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid transparent;
   padding: 6px 12px;
   cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+.close-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+.esc-hint {
+  font-size: 10px;
+  background: #2a2a35;
+  padding: 2px 4px;
   border-radius: 4px;
+  margin-left: 4px;
+}
+.close-btn:hover .esc-hint {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
 }
 .stage {
   flex: 1;
@@ -135,37 +205,77 @@ function handleClose(): void {
   justify-content: center;
   position: relative;
   outline: none;
+  background: radial-gradient(circle at center, #1a1a24 0%, #0a0a0f 100%);
 }
 canvas {
   display: block;
   border-radius: 8px;
-  box-shadow: 0 0 0 1px rgba(108, 92, 231, 0.3);
+  box-shadow: 0 0 0 1px #00e5ff, 0 0 20px rgba(0, 229, 255, 0.2);
 }
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(11, 11, 18, 0.8);
+  background: rgba(10, 10, 15, 0.7);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
-.card {
-  background: #1c1c2a;
-  border: 1px solid rgba(108, 92, 231, 0.4);
-  border-radius: 12px;
-  padding: 24px 40px;
+.launch-card {
+  background: #13131c;
+  border: 1px solid #2a2a35;
+  border-radius: 16px;
+  padding: 32px 48px;
   text-align: center;
-  color: #f5f5fa;
+  color: #f8fafc;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
-.btn {
-  margin-top: 12px;
-  background: #6c5ce7;
-  color: white;
+.icon-wrap {
+  width: 64px;
+  height: 64px;
+  background: rgba(0, 229, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.launch-icon {
+  color: #00e5ff;
+}
+.launch-card h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+.launch-card p {
+  margin: 0;
+  color: #94a3b8;
+}
+.launch-btn {
+  margin-top: 8px;
+  background: #00e5ff;
+  color: #000;
   border: 0;
-  padding: 10px 24px;
+  padding: 12px 32px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 16px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px 0 rgba(0, 229, 255, 0.39);
+}
+.launch-btn:hover {
+  background: #00c4db;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 229, 255, 0.4);
+}
+.launch-btn:active {
+  transform: translateY(1px);
 }
 </style>

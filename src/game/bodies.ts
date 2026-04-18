@@ -3,6 +3,7 @@ export type BodyKind =
   | 'bumper'
   | 'slingshot'
   | 'rollover'
+  | 'teleport'
   | 'peg'
   | 'arcRail'
   | 'flipperLeft'

@@ -44,12 +44,13 @@ export function fixedCircle(
   cx: number,
   cy: number,
   r: number,
-  opts: { restitution?: number; friction?: number } = {},
+  opts: { restitution?: number; friction?: number; sensor?: boolean } = {},
 ): TableBody {
   const rb = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(cx, cy))
   const cd = RAPIER.ColliderDesc.ball(r)
     .setRestitution(opts.restitution ?? 1.4)
     .setFriction(opts.friction ?? 0)
+    .setSensor(!!opts.sensor)
     .setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS)
   world.createCollider(cd, rb)
   return { id, kind, rb, shape: { type: 'circle', r } }

@@ -12,6 +12,7 @@ export const COLORS = {
   accent: 0x6c5ce7,
   rolloverUnlit: 0x335577,
   rolloverLit: 0x9be7ff,
+  teleport: 0xd946ef,
   peg: 0x999999,
   arcRail: 0x4a5a7a,
 } as const
@@ -26,6 +27,8 @@ export function colorFor(kind: BodyKind): number {
       return COLORS.slingshot
     case 'rollover':
       return COLORS.rolloverUnlit
+    case 'teleport':
+      return COLORS.teleport
     case 'peg':
       return COLORS.peg
     case 'arcRail':

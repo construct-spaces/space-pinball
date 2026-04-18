@@ -46,6 +46,7 @@ export class PhysicsWorld {
   private ballArmed = false
   private charging = false
   private chargeStartAt = 0
+  private teleportCooldown = 0
   /** Debug tracing — toggle in console: `window.__pinballTrace = false`. */
   private traceEnabled = true
   private traceTick = 0
@@ -113,6 +114,11 @@ export class PhysicsWorld {
 
   step(): void {
     if (!this.ready) return
+    
+    if (this.teleportCooldown > 0) {
+      this.teleportCooldown -= PHYSICS_STEP_MS
+    }
+    
     this.driveFlippers()
 
     if (this.charging) {
@@ -195,6 +201,22 @@ export class PhysicsWorld {
             y: PLAYFIELD_HEIGHT * 0.2,
           })
           this.litRollovers.clear()
+        }
+        break
+      }
+      case 'teleport': {
+        if (this.teleportCooldown > 0) break
+        const teleports = Array.from(this.table.teleportById.values())
+        if (teleports.length > 1) {
+          const idx = teleports.findIndex(t => t.id === other.id)
+          const next = teleports[(idx + 1) % teleports.length]
+          const nextPos = next.rb.translation()
+          this.ball.setTranslation({ x: nextPos.x, y: nextPos.y }, true)
+          // Add a tiny velocity boost to help it escape the teleport circle if perfectly centered
+          this.ball.setLinvel({ x: (Math.random() - 0.5) * 100, y: (Math.random() - 0.5) * 100 }, true)
+          this.teleportCooldown = 500
+          this.bus.emit('score', { points: 500, reason: 'teleport', x: p.x, y: p.y })
+          this.bus.emit('teleport', { fromX: p.x, fromY: p.y, toX: nextPos.x, toY: nextPos.y })
         }
         break
       }

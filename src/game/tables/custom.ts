@@ -8,6 +8,7 @@ export interface CustomTable {
   flipperRight: TableBody
   drain: TableBody
   rolloverById: Map<string, TableBody>
+  teleportById: Map<string, TableBody>
   leftPivot: { x: number; y: number }
   rightPivot: { x: number; y: number }
   plungerVisual: { x: number; y: number; w: number; h: number }
@@ -16,6 +17,7 @@ export interface CustomTable {
 export function buildCustomTable(world: RAPIER.World, layout: Layout): CustomTable {
   const bodies: TableBody[] = []
   const rolloverById = new Map<string, TableBody>()
+  const teleportById = new Map<string, TableBody>()
   let flipperLeft: TableBody | undefined
   let flipperRight: TableBody | undefined
   let drain: TableBody | undefined
@@ -39,10 +41,17 @@ export function buildCustomTable(world: RAPIER.World, layout: Layout): CustomTab
         if (e.kind === 'drain') drain = tb
         break
       }
+      case 'teleport':
       case 'bumper':
       case 'peg': {
         const opts = e.kind === 'bumper' ? { restitution: 1.5 } : { restitution: 0.8 }
-        bodies.push(fixedCircle(world, e.id, e.kind, e.x, e.y, e.r, opts))
+        if (e.kind === 'teleport') {
+          const tb = fixedCircle(world, e.id, e.kind, e.x, e.y, e.r, { sensor: true })
+          bodies.push(tb)
+          teleportById.set(e.id, tb)
+        } else {
+          bodies.push(fixedCircle(world, e.id, e.kind, e.x, e.y, e.r, opts))
+        }
         break
       }
       case 'flipperLeft':
@@ -94,6 +103,7 @@ export function buildCustomTable(world: RAPIER.World, layout: Layout): CustomTab
     flipperRight,
     drain,
     rolloverById,
+    teleportById,
     leftPivot,
     rightPivot,
     plungerVisual: layout.plungerVisual,
