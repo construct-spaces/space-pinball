@@ -46,6 +46,7 @@ export function newBlankLayout(): Layout {
     ballStart: { x: 550, y: 820 },
     plungerVisual: { x: 550, y: 880, w: 28, h: 14 },
     elements,
+    decorations: [],
     createdAt: now,
     updatedAt: now,
   }
