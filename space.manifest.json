@@ -31,6 +31,11 @@
       "path": "leaderboard",
       "label": "Leaderboard",
       "icon": "i-lucide-trophy"
+    },
+    {
+      "path": "editor",
+      "label": "Editor",
+      "icon": "i-lucide-pencil-ruler"
     }
   ],
   "keywords": ["pinball", "game", "arcade"],
