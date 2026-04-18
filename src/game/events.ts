@@ -13,6 +13,7 @@ export type GameEventMap = {
   ballsChanged: { balls: number }
   comboChanged: { combo: number; multiplier: number }
   chargeChanged: { charge: number }
+  rolloverLit: { id: string }
 }
 
 type Handler<T> = (payload: T) => void

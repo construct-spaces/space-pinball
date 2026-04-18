@@ -79,12 +79,12 @@ export class PinballGame {
     this.bus.on('hit', ({ kind, x, y }) => {
       if (kind === 'bumper') this.renderer.vfx.burst(x, y, COLORS.bumper, 10)
       else if (kind === 'slingshot') this.renderer.vfx.burst(x, y, COLORS.slingshot, 8)
-      else if (kind === 'dropTarget') this.renderer.vfx.burst(x, y, COLORS.dropTarget, 6)
+      else if (kind === 'rollover') this.renderer.vfx.burst(x, y, COLORS.rolloverLit, 6)
     })
     this.bus.on('score', ({ points, x, y, reason }) => {
       if (x == null || y == null) return
       const shown = Math.round(points * this.scoring.multiplier)
-      const label = reason === 'dropTargetBank' ? `BANK +${shown}` : `+${shown}`
+      const label = reason === 'rolloverBank' ? `BANK +${shown}` : `+${shown}`
       this.renderer.vfx.popup(x, y, label)
     })
 

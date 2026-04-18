@@ -20,10 +20,10 @@ export class Audio {
           case 'slingshot':
             this.blip(660, 0.06, 'triangle')
             break
-          case 'dropTarget':
+          case 'rollover':
             this.blip(880, 0.05, 'sine')
             break
-          case 'dropTargetBank':
+          case 'rolloverBank':
             this.chord([523, 659, 784], 0.28)
             break
         }
