@@ -13,8 +13,24 @@ function emptyContainer(): Container {
   return { version: 1, drafts: {} }
 }
 
+class MemoryStorage implements Storage {
+  private store = new Map<string, string>()
+  get length() { return this.store.size }
+  getItem(k: string): string | null { return this.store.get(k) ?? null }
+  setItem(k: string, v: string): void { this.store.set(k, v) }
+  removeItem(k: string): void { this.store.delete(k) }
+  clear(): void { this.store.clear() }
+  key(i: number): string | null { return [...this.store.keys()][i] ?? null }
+}
+
+function getStorage(): Storage {
+  const ls = globalThis.localStorage
+  if (ls && typeof ls.getItem === 'function') return ls
+  return new MemoryStorage()
+}
+
 export class LayoutStore {
-  constructor(private storage: Storage = globalThis.localStorage) {}
+  constructor(private storage: Storage = getStorage()) {}
 
   private read(): Container {
     const raw = this.storage.getItem(KEY)

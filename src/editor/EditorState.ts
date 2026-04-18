@@ -2,7 +2,7 @@ import { reactive, computed, toRaw } from 'vue'
 import { History } from './History'
 import { LayoutStore } from './LayoutStore'
 import { newBlankLayout } from './boilerplate'
-import type { Element, ElementKind, Layout } from './types'
+import type { Decor, Element, ElementKind, Layout } from './types'
 
 export type Mode =
   | 'select'
@@ -22,6 +22,7 @@ interface State {
   selectedId: string | undefined
   mode: Mode
   testPlayOpen: boolean
+  paletteTab: 'tools' | 'beauty'
 }
 
 const state = reactive<State>({
@@ -29,6 +30,7 @@ const state = reactive<State>({
   selectedId: undefined,
   mode: 'select',
   testPlayOpen: false,
+  paletteTab: 'tools',
 })
 
 const history = new History<Layout>(100)
@@ -51,6 +53,26 @@ function addElement(e: Element): void {
   commit()
 }
 
+function ensureDecorArray(): Decor[] {
+  if (!state.layout.decorations) state.layout.decorations = []
+  return state.layout.decorations
+}
+
+function addDecor(d: Decor): void {
+  ensureDecorArray().push(d)
+  state.selectedId = d.id
+  commit()
+}
+
+function updateDecor(patch: Partial<Decor>): void {
+  const arr = state.layout.decorations
+  if (!arr) return
+  const i = arr.findIndex((x) => x.id === state.selectedId)
+  if (i < 0) return
+  arr.splice(i, 1, { ...arr[i], ...patch } as Decor)
+  commit()
+}
+
 function updateSelected(patch: Partial<Element>): void {
   if (state.selectedId === BALL_START_ID) {
     const p = patch as Partial<{ x: number; y: number }>
@@ -69,7 +91,11 @@ function updateSelected(patch: Partial<Element>): void {
 function deleteSelected(): void {
   if (!state.selectedId) return
   if (state.selectedId === BALL_START_ID) return
+  const beforeElems = state.layout.elements.length
   state.layout.elements = state.layout.elements.filter((e) => e.id !== state.selectedId)
+  if (state.layout.elements.length === beforeElems && state.layout.decorations) {
+    state.layout.decorations = state.layout.decorations.filter((d) => d.id !== state.selectedId)
+  }
   state.selectedId = undefined
   commit()
 }
@@ -118,7 +144,9 @@ const selected = computed(() => {
       y: state.layout.ballStart.y,
     }
   }
-  return state.layout.elements.find((e) => e.id === state.selectedId)
+  const el = state.layout.elements.find((e) => e.id === state.selectedId)
+  if (el) return el
+  return state.layout.decorations?.find((d) => d.id === state.selectedId)
 })
 
 export function useEditorStore() {
@@ -132,6 +160,8 @@ export function useEditorStore() {
     selected,
     setLayout,
     addElement,
+    addDecor,
+    updateDecor,
     updateSelected,
     deleteSelected,
     undo,
