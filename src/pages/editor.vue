@@ -3,6 +3,10 @@ import EditorCanvas from '../editor/components/EditorCanvas.vue'
 import Palette from '../editor/components/Palette.vue'
 import PropertyPanel from '../editor/components/PropertyPanel.vue'
 import LayoutsSidebar from '../editor/components/LayoutsSidebar.vue'
+import TestPlayModal from '../editor/components/TestPlayModal.vue'
+import { useEditorStore } from '../editor/EditorState'
+
+const store = useEditorStore()
 </script>
 
 <template>
@@ -17,6 +21,7 @@ import LayoutsSidebar from '../editor/components/LayoutsSidebar.vue'
     <aside class="col right">
       <PropertyPanel />
     </aside>
+    <TestPlayModal v-if="store.state.testPlayOpen" />
   </div>
 </template>
 

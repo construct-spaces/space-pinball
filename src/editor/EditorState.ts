@@ -21,12 +21,14 @@ interface State {
   layout: Layout
   selectedId: string | undefined
   mode: Mode
+  testPlayOpen: boolean
 }
 
 const state = reactive<State>({
   layout: newBlankLayout(),
   selectedId: undefined,
   mode: 'select',
+  testPlayOpen: false,
 })
 
 const history = new History<Layout>(100)
@@ -100,7 +102,11 @@ function rename(name: string): void {
 
 function testPlay(): void {
   persistence.saveDraft(state.layout)
-  window.open('/play?layout=__draft__', '_blank')
+  state.testPlayOpen = true
+}
+
+function closeTestPlay(): void {
+  state.testPlayOpen = false
 }
 
 const selected = computed(() => {
@@ -134,6 +140,7 @@ export function useEditorStore() {
     newLayout,
     rename,
     testPlay,
+    closeTestPlay,
     listLayouts: () => persistence.list(),
     duplicate: (id: string) => persistence.duplicate(id),
     remove: (id: string) => persistence.remove(id),
