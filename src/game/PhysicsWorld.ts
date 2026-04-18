@@ -12,6 +12,7 @@ import {
   PLUNGER_CHARGE_MAX_MS,
   PLUNGER_SPEED_MAX,
   PLUNGER_SPEED_MIN,
+  POINTS,
 } from './constants'
 import type { EventBus } from './events'
 import type { BodyKind, GameBody } from './bodies'
@@ -19,7 +20,7 @@ import type { BodyKind, GameBody } from './bodies'
 interface ColliderMeta {
   kind: BodyKind
   id: string
-  /** Back-pointer for quick lookups (e.g. dropTarget disable). */
+  /** Back-pointer for quick lookups. */
   tb?: TableBody
 }
 
@@ -36,7 +37,8 @@ export class PhysicsWorld {
   private metaByHandle = new Map<number, ColliderMeta>()
   private leftFlipperActive = false
   private rightFlipperActive = false
-  private droppedTargets = new Set<string>()
+  /** Rollovers lit by the current ball; cleared when bank fires or ball respawns. */
+  readonly litRollovers = new Set<string>()
   private hiddenIds = new Set<string>()
   private ballArmed = false
   private charging = false
@@ -127,29 +129,26 @@ export class PhysicsWorld {
           const f = 320
           this.ball.applyImpulse({ x: (dx / d) * f, y: (dy / d) * f }, true)
         }
-        this.bus.emit('score', { points: 100, reason: 'bumper', x: p.x, y: p.y })
+        this.bus.emit('score', { points: POINTS.BUMPER, reason: 'bumper', x: p.x, y: p.y })
         break
       }
       case 'slingshot':
-        this.bus.emit('score', { points: 50, reason: 'slingshot', x: p.x, y: p.y })
+        this.bus.emit('score', { points: POINTS.SLINGSHOT, reason: 'slingshot', x: p.x, y: p.y })
         break
-      case 'dropTarget': {
-        if (!this.droppedTargets.has(other.id) && other.tb) {
-          this.droppedTargets.add(other.id)
-          this.hiddenIds.add(other.id)
-          for (let i = 0; i < other.tb.rb.numColliders(); i++) {
-            other.tb.rb.collider(i).setEnabled(false)
-          }
-          this.bus.emit('score', { points: 25, reason: 'dropTarget', x: p.x, y: p.y })
-          if (this.droppedTargets.size === this.table.dropTargetById.size) {
-            this.bus.emit('score', {
-              points: 500,
-              reason: 'dropTargetBank',
-              x: PLAYFIELD_WIDTH / 2,
-              y: PLAYFIELD_HEIGHT * 0.2,
-            })
-            setTimeout(() => this.respawnDropTargets(), 1500)
-          }
+      case 'rollover': {
+        const id = other.id
+        if (this.litRollovers.has(id)) break
+        this.litRollovers.add(id)
+        this.bus.emit('score', { points: POINTS.ROLLOVER, reason: 'rollover', x: p.x, y: p.y })
+        this.bus.emit('rolloverLit', { id })
+        if (this.litRollovers.size === this.table.rolloverById.size) {
+          this.bus.emit('score', {
+            points: POINTS.ROLLOVER_BANK,
+            reason: 'rolloverBank',
+            x: PLAYFIELD_WIDTH / 2,
+            y: PLAYFIELD_HEIGHT * 0.2,
+          })
+          this.litRollovers.clear()
         }
         break
       }
@@ -161,18 +160,6 @@ export class PhysicsWorld {
         break
       }
     }
-  }
-
-  private respawnDropTargets(): void {
-    for (const id of this.droppedTargets) {
-      const tb = this.table.dropTargetById.get(id)
-      if (!tb) continue
-      for (let i = 0; i < tb.rb.numColliders(); i++) {
-        tb.rb.collider(i).setEnabled(true)
-      }
-      this.hiddenIds.delete(id)
-    }
-    this.droppedTargets.clear()
   }
 
   private driveFlippers(): void {
@@ -198,8 +185,8 @@ export class PhysicsWorld {
     const p = this.ball.translation()
     const v = this.ball.linvel()
     const speed = Math.hypot(v.x, v.y)
-    // Ball radius 12, right wall inner face at x=480 → max ball x ≈ 468.
-    return p.x > 442 && p.x < 470 && p.y > 500 && speed < 60
+    // Ball radius 12, plunger lane inner x ∈ [528, 572], divider top y=140, floor y≈888.
+    return p.x > 530 && p.x < 570 && p.y > 700 && speed < 60
   }
 
   startCharge(): void {
@@ -241,13 +228,14 @@ export class PhysicsWorld {
     this.ball.setLinvel({ x: 0, y: 0 }, true)
     this.ball.setAngvel(0, true)
     this.ballArmed = false
+    this.litRollovers.clear()
   }
 
   async fullReset(): Promise<void> {
     this.ready = false
     this.destroy()
     this.metaByHandle.clear()
-    this.droppedTargets.clear()
+    this.litRollovers.clear()
     this.hiddenIds.clear()
     this.bodies.length = 0
     this.charging = false
