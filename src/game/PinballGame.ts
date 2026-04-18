@@ -8,6 +8,7 @@ import { Audio } from './Audio'
 import { EventBus } from './events'
 import { COLORS } from './palette'
 import { STARTING_BALLS } from './constants'
+import { DecorationLayer } from './DecorationLayer'
 
 export interface GameCallbacks {
   onScoreChanged?: (score: number, multiplier: number) => void
@@ -31,6 +32,7 @@ export class PinballGame {
   input: InputController
   scoring: Scoring
   audio: Audio
+  decorations = new DecorationLayer()
 
   state: GameState = 'idle'
   ballsRemaining = STARTING_BALLS
@@ -48,7 +50,10 @@ export class PinballGame {
         this.renderer.syncFromPhysics(this.physics)
         this.renderer.setCharge(this.physics.chargeLevel)
       },
-      (dt) => this.renderer.tick(dt),
+      (dt) => {
+        this.renderer.tick(dt)
+        this.decorations.tick(dt)
+      },
     )
     this.input = new InputController(this.physics, {
       onLaunchDown: () => this.onLaunchDown(),
@@ -64,6 +69,11 @@ export class PinballGame {
     this.scoring.attach()
     this.audio.attach()
     this.input.attach()
+
+    if (customLayout) {
+      this.decorations.init(customLayout, this.bus)
+      this.renderer.setDecorLayer(this.decorations.container)
+    }
 
     this.bus.on('scoreChanged', ({ score, multiplier }) => {
       this.callbacks.onScoreChanged?.(score, multiplier)
@@ -81,6 +91,10 @@ export class PinballGame {
       if (kind === 'bumper') this.renderer.vfx.burst(x, y, COLORS.bumper, 10)
       else if (kind === 'slingshot') this.renderer.vfx.burst(x, y, COLORS.slingshot, 8)
       else if (kind === 'rollover') this.renderer.vfx.burst(x, y, COLORS.rolloverLit, 6)
+    })
+    this.bus.on('teleport', ({ fromX, fromY, toX, toY }) => {
+      this.renderer.vfx.burst(fromX, fromY, COLORS.teleport, 16)
+      this.renderer.vfx.burst(toX, toY, COLORS.teleport, 16)
     })
     this.bus.on('score', ({ points, x, y, reason }) => {
       if (x == null || y == null) return

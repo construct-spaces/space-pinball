@@ -26,6 +26,7 @@ export class Renderer {
   private plungerGfx = new Graphics()
   private chargeRef = { charge: 0 }
   private initialized = false
+  private decorContainer: Container | null = null
 
   async init(canvas: HTMLCanvasElement): Promise<void> {
     this.app = new Application()
@@ -74,6 +75,13 @@ export class Renderer {
     this.playfield.addChild(this.fxLayer)
 
     this.initialized = true
+  }
+
+  /** Mount an external container above the body layer (for decorations). */
+  setDecorLayer(container: Container): void {
+    if (this.decorContainer) this.playfield.removeChild(this.decorContainer)
+    this.decorContainer = container
+    this.playfield.addChildAt(container, this.playfield.getChildIndex(this.fxLayer))
   }
 
   syncFromPhysics(physics: PhysicsWorld): void {
@@ -157,6 +165,10 @@ export class Renderer {
       g.circle(0, 0, b.shape.r).fill({ color: fill })
       if (b.kind === 'bumper') {
         g.circle(0, 0, b.shape.r * 0.55).fill({ color: 0xffffff, alpha: 0.3 })
+      }
+      if (b.kind === 'teleport') {
+        g.circle(0, 0, b.shape.r * 0.7).fill({ color: 0x05050d, alpha: 0.8 })
+        g.circle(0, 0, b.shape.r * 0.3).fill({ color: fill, alpha: 0.5 })
       }
       if (b.kind === 'post') {
         g.circle(0, 0, b.shape.r * 0.5).fill({ color: 0xffffff, alpha: 0.4 })
