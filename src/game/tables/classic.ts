@@ -122,9 +122,20 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   // Top wall — seals everything at top.
   bodies.push(fixedRect(world, 'topWall', 'wall', W / 2, wallT / 2, W, wallT))
 
-  // Playfield right inner wall — full height, separates playfield from gap.
-  // (PF top reaches topWall; ball never escapes upward into the gap.)
-  bodies.push(fixedRect(world, 'rightWallPF', 'wall', (PF_INNER_RIGHT + GAP_LEFT) / 2, H / 2, GAP_LEFT - PF_INNER_RIGHT, H))
+  // Playfield right inner wall — runs from BELOW the gate opening down to bottom.
+  // Top opening (y < GATE_OPEN_Y) lets the gate rail deliver the ball from the
+  // lane into the upper playfield.
+  bodies.push(
+    fixedRect(
+      world,
+      'rightWallPF',
+      'wall',
+      (PF_INNER_RIGHT + GAP_LEFT) / 2,
+      (GATE_OPEN_Y + H) / 2,
+      GAP_LEFT - PF_INNER_RIGHT,
+      H - GATE_OPEN_Y,
+    ),
+  )
 
   // Lane left wall — thick, runs from BELOW the gate opening down to the bottom
   // so the ball can exit the lane upward into the gate corridor.
