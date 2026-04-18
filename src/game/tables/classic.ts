@@ -122,10 +122,6 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   // and lane left wall (x=500). Prevents ball from settling in the strip.
   bodies.push(fixedRect(world, 'gapFloor', 'wall', 494, H - 10, 12, 20))
 
-  // Top seal across the gap strip — keeps ball out of the visible separator
-  // (corridor for ball flow only goes left-into-playfield via the gate rail).
-  bodies.push(fixedRect(world, 'gapCeiling', 'wall', 494, 60, 12, 80))
-
   // (Top arch removed — topWall already seals top; arch was clutter.)
 
   // Lane floor (full width of lane interior x ∈ [520, 580])
@@ -186,7 +182,10 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
       [105, 410],
       [130, 460],
     ]
-    const right: Array<[number, number]> = left.map(([x, y]) => [W - x, y])
+    // Mirror across the new playfield center (x ≈ 250), not full canvas (W=600),
+    // so the right arc stays inside the playfield right wall (x=480 inner face).
+    const PF_CENTER_X = 250
+    const right: Array<[number, number]> = left.map(([x, y]) => [2 * PF_CENTER_X - x, y])
     for (const [side, pts] of [
       ['L', left] as const,
       ['R', right] as const,
