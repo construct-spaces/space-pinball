@@ -122,43 +122,23 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   // and lane left wall (x=500). Prevents ball from settling in the strip.
   bodies.push(fixedRect(world, 'gapFloor', 'wall', 494, H - 10, 12, 20))
 
-  // Top arch — 8 segs along an arc (visual + deflective).
-  {
-    const cx = 290, cy = 290, r = 270
-    const startDeg = 200, endDeg = 340
-    const segs = 8
-    for (let i = 0; i < segs; i++) {
-      const a0 = ((startDeg + (i * (endDeg - startDeg)) / segs) * Math.PI) / 180
-      const a1 = ((startDeg + ((i + 1) * (endDeg - startDeg)) / segs) * Math.PI) / 180
-      const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0)
-      const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1)
-      const mx = (x0 + x1) / 2, my = (y0 + y1) / 2
-      const dx = x1 - x0, dy = y1 - y0
-      const len = Math.hypot(dx, dy)
-      const ang = Math.atan2(dy, dx)
-      bodies.push(fixedRect(world, `arch${i}`, 'wall', mx, my, len, 8, { angle: ang }))
-    }
-  }
+  // Top seal across the gap strip — keeps ball out of the visible separator
+  // (corridor for ball flow only goes left-into-playfield via the gate rail).
+  bodies.push(fixedRect(world, 'gapCeiling', 'wall', 494, 60, 12, 80))
+
+  // (Top arch removed — topWall already seals top; arch was clutter.)
 
   // Lane floor (full width of lane interior x ∈ [520, 580])
   bodies.push(fixedRect(world, 'laneFloor', 'wall', 550, H - 12, 60, 16))
 
-  // Lane has an opening at the top (lane left wall ends at y=120) so the ball
-  // can fly out into the upper playfield via the gate rail. Block that opening
-  // for return traffic with a one-way lip on the playfield side of the wall top.
-  bodies.push(
-    fixedRect(world, 'laneLip', 'wall', 495, 130, 24, 4, { angle: -1.0, restitution: 0.2 }),
-  )
-
-  // Curved exit rail (plunger lane → upper playfield) — starts above the lane
-  // opening and arcs left + down into the upper playfield.
+  // Curved exit rail (plunger lane → upper playfield) — 3 segs, simpler arc.
+  // Starts above the lane (lane left wall ends at y=120; this rail is above
+  // that) and lands inside the upper playfield (well below topWall y=20).
   {
     const pts: Array<[number, number]> = [
-      [560, 110],
-      [540, 80],
-      [480, 55],
-      [380, 40],
-      [280, 30],
+      [560, 100],
+      [440, 50],
+      [280, 50],
     ]
     for (let i = 0; i < pts.length - 1; i++) {
       const [x0, y0] = pts[i]
@@ -174,16 +154,17 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
     }
   }
 
-  // Top rollover posts (4 small vertical rects)
+  // Top rollover posts (4 small vertical rects) — moved to y=140 to clear
+  // the gate rail area (rail lands at y≈50 → leave a bumper-free zone above).
   for (const [i, x] of [200, 240, 280, 320].entries()) {
-    bodies.push(fixedRect(world, `rollPost${i}`, 'post', x, 90, 6, 40))
+    bodies.push(fixedRect(world, `rollPost${i}`, 'post', x, 140, 6, 40))
   }
 
-  // Top rollover sensor zones (3)
+  // Top rollover sensor zones (3) — sit between the posts at y=140.
   const rolloverById = new Map<string, TableBody>()
   for (const [i, x] of [220, 260, 300].entries()) {
     const id = `roll${i}`
-    const tb = fixedRect(world, id, 'rollover', x, 90, 28, 30, { sensor: true })
+    const tb = fixedRect(world, id, 'rollover', x, 140, 28, 30, { sensor: true })
     bodies.push(tb)
     rolloverById.set(id, tb)
   }
