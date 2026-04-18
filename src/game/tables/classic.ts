@@ -106,11 +106,8 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   // Single divider:     x ∈ [490, 520], width 30  (replaces the old gap strip)
   // Lane interior:      x ∈ [520, 580], width 60
   // Lane center:        x = 550
-  const PF_INNER_RIGHT = 490
-  const LANE_INNER_LEFT = 520
   const LANE_INNER_RIGHT = 580
   const LANE_CENTER_X = 550
-  const GATE_OPEN_Y = 110 // y above which the divider is open (gate corridor)
 
   // ── Outer walls ──────────────────────────────────────────────────────────
   bodies.push(fixedRect(world, 'leftWall', 'wall', wallT / 2, H / 2, wallT, H))
@@ -129,7 +126,7 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
       'wall',
       LANE_CENTER_X,
       H - 12,
-      LANE_INNER_RIGHT - LANE_INNER_LEFT,
+      60,
       16,
     ),
   )
@@ -270,7 +267,8 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
     bodies.push(fixedRect(world, 'bottomL', 'wall', cx, cy, len, 20, { angle: ang }))
   }
   {
-    const x0 = drainCenterX + drainWidth / 2, x1 = PF_INNER_RIGHT
+    // Right bottom wall extends to lane outer right wall (lane is open now).
+    const x0 = drainCenterX + drainWidth / 2, x1 = W - wallT
     const y0 = 890, y1 = 880 // right side: drain side down, outer up
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2
     const len = Math.hypot(x1 - x0, y1 - y0)
