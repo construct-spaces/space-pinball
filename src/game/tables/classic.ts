@@ -145,10 +145,10 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   )
   // Lane floor
   bodies.push(fixedRect(world, 'laneFloor', 'wall', 550, H - 12, 44, 16))
-  // One-way lip on inner side of divider top — widened to reach divider face
-  // so a returning ball cannot squeeze between the lip and the divider.
+  // One-way lip on inner side of divider top — short, hugs the divider so it
+  // blocks return-into-lane without intruding far into the upper playfield.
   bodies.push(
-    fixedRect(world, 'laneLip', 'wall', 503, 140, 28, 4, { angle: -1.0, restitution: 0.2 }),
+    fixedRect(world, 'laneLip', 'wall', 513, 140, 20, 4, { angle: -1.0, restitution: 0.2 }),
   )
 
   // Curved exit rail (plunger lane → upper playfield)
@@ -257,9 +257,10 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
     bodies.push(fixedCircle(world, `kp${i}`, 'post', x, y, 8, { restitution: 0.8 }))
   }
 
-  // Inlane / outlane guides
-  bodies.push(fixedRect(world, 'guideL', 'wall', 90, 790, 117, 6, { angle: 0.54 }))
-  bodies.push(fixedRect(world, 'guideR', 'wall', 510, 790, 117, 6, { angle: -0.54 }))
+  // Inlane / outlane guides — kept clear of plunger lane divider (x=520).
+  // Right guide right-end x ≈ 470 + 50*cos(0.54) ≈ 513, safely left of 517.
+  bodies.push(fixedRect(world, 'guideL', 'wall', 130, 790, 100, 6, { angle: 0.54 }))
+  bodies.push(fixedRect(world, 'guideR', 'wall', 470, 790, 100, 6, { angle: -0.54 }))
 
   // Drain sensor
   const leftPivotX = 180,
