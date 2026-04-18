@@ -1,9 +1,14 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, toRaw } from 'vue'
 import { History } from './History'
 import { LayoutStore } from './LayoutStore'
 import { newBlankLayout } from './boilerplate'
 import type { Element, ElementKind, Layout } from './types'
+
+// Deep clone via JSON. Avoids clone's failure on Vue reactive proxies.
+function clone<T>(v: T): T {
+  return JSON.parse(JSON.stringify(toRaw(v))) as T
+}
 
 export type Mode =
   | 'select'
@@ -16,16 +21,16 @@ export const useEditorStore = defineStore('editor', () => {
   const selectedId = ref<string | undefined>(undefined)
   const mode = ref<Mode>('select')
   const history = new History<Layout>(100)
-  history.push(structuredClone(layout.value))
+  history.push(clone(layout.value))
 
   function setLayout(next: Layout): void {
     layout.value = next
     selectedId.value = undefined
-    history.push(structuredClone(next))
+    history.push(clone(next))
   }
 
   function commit(): void {
-    history.push(structuredClone(layout.value))
+    history.push(clone(layout.value))
     store.save(layout.value)
   }
 
@@ -52,12 +57,12 @@ export const useEditorStore = defineStore('editor', () => {
 
   function undo(): void {
     const prev = history.undo()
-    if (prev) layout.value = structuredClone(prev)
+    if (prev) layout.value = clone(prev)
   }
 
   function redo(): void {
     const next = history.redo()
-    if (next) layout.value = structuredClone(next)
+    if (next) layout.value = clone(next)
   }
 
   function loadLayout(id: string): void {
