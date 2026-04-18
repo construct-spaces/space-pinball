@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useEditorStore } from '../EditorState'
 import { RECT_KINDS, CIRCLE_KINDS, FLIPPER_KINDS, POLYLINE_KINDS } from '../types'
 
 const store = useEditorStore()
-const sel = computed(() => store.selected)
+const sel = store.selected
 
 const RAD_TO_DEG = 180 / Math.PI
 const DEG_TO_RAD = Math.PI / 180
@@ -114,7 +113,23 @@ function del(): void {
       <span class="hint">polyline ({{ (sel as any).points.length }} points)</span>
     </template>
 
-    <button class="del" @click="del">Delete</button>
+    <template v-else-if="sel.kind === 'ballStart'">
+      <div class="row">
+        <span class="lbl">x</span>
+        <button class="step" @click="bump('x', -10)">−</button>
+        <input type="number" :value="getVal('x')" @change="setVal('x', +($event.target as HTMLInputElement).value)" />
+        <button class="step" @click="bump('x', 10)">+</button>
+      </div>
+      <div class="row">
+        <span class="lbl">y</span>
+        <button class="step" @click="bump('y', -10)">−</button>
+        <input type="number" :value="getVal('y')" @change="setVal('y', +($event.target as HTMLInputElement).value)" />
+        <button class="step" @click="bump('y', 10)">+</button>
+      </div>
+      <span class="hint">ball spawn point — cannot delete</span>
+    </template>
+
+    <button v-if="sel.kind !== 'ballStart'" class="del" @click="del">Delete</button>
   </div>
   <div v-else class="props">
     <em>(select an element)</em>

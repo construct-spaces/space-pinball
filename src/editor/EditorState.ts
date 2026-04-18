@@ -1,100 +1,129 @@
-import { defineStore } from 'pinia'
-import { ref, computed, toRaw } from 'vue'
+import { reactive, computed, toRaw } from 'vue'
 import { History } from './History'
 import { LayoutStore } from './LayoutStore'
 import { newBlankLayout } from './boilerplate'
 import type { Element, ElementKind, Layout } from './types'
-
-// Deep clone via JSON. Avoids clone's failure on Vue reactive proxies.
-function clone<T>(v: T): T {
-  return JSON.parse(JSON.stringify(toRaw(v))) as T
-}
 
 export type Mode =
   | 'select'
   | { kind: 'place'; elementKind: ElementKind }
   | { kind: 'polyline'; elementKind: 'arcRail' | 'gateRail'; points: Array<{ x: number; y: number }> }
 
-export const useEditorStore = defineStore('editor', () => {
-  const store = new LayoutStore()
-  const layout = ref<Layout>(newBlankLayout())
-  const selectedId = ref<string | undefined>(undefined)
-  const mode = ref<Mode>('select')
-  const history = new History<Layout>(100)
-  history.push(clone(layout.value))
+export const BALL_START_ID = '__ballStart__'
 
-  function setLayout(next: Layout): void {
-    layout.value = next
-    selectedId.value = undefined
-    history.push(clone(next))
-  }
+function clone<T>(v: T): T {
+  return JSON.parse(JSON.stringify(toRaw(v))) as T
+}
 
-  function commit(): void {
-    history.push(clone(layout.value))
-    store.save(layout.value)
-  }
+const persistence = new LayoutStore()
 
-  function addElement(e: Element): void {
-    layout.value.elements.push(e)
-    selectedId.value = e.id
+interface State {
+  layout: Layout
+  selectedId: string | undefined
+  mode: Mode
+}
+
+const state = reactive<State>({
+  layout: newBlankLayout(),
+  selectedId: undefined,
+  mode: 'select',
+})
+
+const history = new History<Layout>(100)
+history.push(clone(state.layout))
+
+function setLayout(next: Layout): void {
+  state.layout = next
+  state.selectedId = undefined
+  history.push(clone(next))
+}
+
+function commit(): void {
+  history.push(clone(state.layout))
+  persistence.save(state.layout)
+}
+
+function addElement(e: Element): void {
+  state.layout.elements.push(e)
+  state.selectedId = e.id
+  commit()
+}
+
+function updateSelected(patch: Partial<Element>): void {
+  if (state.selectedId === BALL_START_ID) {
+    const p = patch as Partial<{ x: number; y: number }>
+    if (p.x !== undefined) state.layout.ballStart.x = p.x
+    if (p.y !== undefined) state.layout.ballStart.y = p.y
     commit()
+    return
   }
+  const i = state.layout.elements.findIndex((x) => x.id === state.selectedId)
+  if (i < 0) return
+  const merged = { ...state.layout.elements[i], ...patch } as Element
+  state.layout.elements.splice(i, 1, merged)
+  commit()
+}
 
-  function updateSelected(patch: Partial<Element>): void {
-    const i = layout.value.elements.findIndex((x) => x.id === selectedId.value)
-    if (i < 0) return
-    const merged = { ...layout.value.elements[i], ...patch } as Element
-    layout.value.elements.splice(i, 1, merged)
-    commit()
+function deleteSelected(): void {
+  if (!state.selectedId) return
+  if (state.selectedId === BALL_START_ID) return
+  state.layout.elements = state.layout.elements.filter((e) => e.id !== state.selectedId)
+  state.selectedId = undefined
+  commit()
+}
+
+function undo(): void {
+  const prev = history.undo()
+  if (prev) state.layout = clone(prev)
+}
+
+function redo(): void {
+  const next = history.redo()
+  if (next) state.layout = clone(next)
+}
+
+function loadLayout(id: string): void {
+  const found = persistence.get(id)
+  if (!found) return
+  setLayout(found)
+}
+
+function newLayout(): void {
+  setLayout(newBlankLayout())
+  persistence.save(state.layout)
+}
+
+function rename(name: string): void {
+  state.layout.name = name
+  commit()
+}
+
+function testPlay(): void {
+  persistence.saveDraft(state.layout)
+  window.open('/play?layout=__draft__', '_blank')
+}
+
+const selected = computed(() => {
+  if (state.selectedId === BALL_START_ID) {
+    return {
+      id: BALL_START_ID,
+      kind: 'ballStart' as const,
+      x: state.layout.ballStart.x,
+      y: state.layout.ballStart.y,
+    }
   }
+  return state.layout.elements.find((e) => e.id === state.selectedId)
+})
 
-  function deleteSelected(): void {
-    if (!selectedId.value) return
-    layout.value.elements = layout.value.elements.filter((e) => e.id !== selectedId.value)
-    selectedId.value = undefined
-    commit()
-  }
-
-  function undo(): void {
-    const prev = history.undo()
-    if (prev) layout.value = clone(prev)
-  }
-
-  function redo(): void {
-    const next = history.redo()
-    if (next) layout.value = clone(next)
-  }
-
-  function loadLayout(id: string): void {
-    const found = store.get(id)
-    if (!found) return
-    setLayout(found)
-  }
-
-  function newLayout(): void {
-    setLayout(newBlankLayout())
-    store.save(layout.value)
-  }
-
-  function rename(name: string): void {
-    layout.value.name = name
-    commit()
-  }
-
-  function testPlay(): void {
-    store.saveDraft(layout.value)
-    window.open('/play?layout=__draft__', '_blank')
-  }
-
-  const selected = computed(() =>
-    layout.value.elements.find((e) => e.id === selectedId.value),
-  )
-
+export function useEditorStore() {
   return {
-    layout,
-    selectedId,
+    state,
+    get layout() { return state.layout },
+    get selectedId() { return state.selectedId },
+    set selectedId(v: string | undefined) { state.selectedId = v },
+    get mode() { return state.mode },
+    set mode(v: Mode) { state.mode = v },
     selected,
-    mode,
     setLayout,
     addElement,
     updateSelected,
@@ -105,8 +134,8 @@ export const useEditorStore = defineStore('editor', () => {
     newLayout,
     rename,
     testPlay,
-    listLayouts: () => store.list(),
-    duplicate: (id: string) => store.duplicate(id),
-    remove: (id: string) => store.remove(id),
+    listLayouts: () => persistence.list(),
+    duplicate: (id: string) => persistence.duplicate(id),
+    remove: (id: string) => persistence.remove(id),
   }
-})
+}

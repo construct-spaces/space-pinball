@@ -9,6 +9,7 @@ export type ElementKind =
   | 'flipperRight'
   | 'arcRail'
   | 'gateRail'
+  | 'ballStart'
 
 export interface RectElement {
   id: string

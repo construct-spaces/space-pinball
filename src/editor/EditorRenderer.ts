@@ -8,8 +8,10 @@ import {
   POLYLINE_KINDS,
 } from './types'
 import { colorFor } from '../game/palette'
-import { FLIPPER_LENGTH, FLIPPER_THICKNESS } from '../game/constants'
+import { BALL_RADIUS, FLIPPER_LENGTH, FLIPPER_THICKNESS } from '../game/constants'
 import type { BodyKind } from '../game/bodies'
+
+const BALL_START_ID = '__ballStart__'
 
 const GRID_COLOR = 0x18182a
 const SELECT_COLOR = 0x00e5ff
@@ -62,7 +64,15 @@ export class EditorRenderer {
       this.drawElement(g, e)
       this.bodyLayer.addChild(g)
     }
-    this.drawSelection(layout.elements, selectedId)
+    // Ball-start marker (ghost ball)
+    const bs = new Graphics()
+    bs.circle(0, 0, BALL_RADIUS)
+      .fill({ color: 0xf5f5fa, alpha: 0.25 })
+      .circle(0, 0, BALL_RADIUS)
+      .stroke({ color: 0xf5f5fa, width: 2, alpha: 0.7 })
+    bs.position.set(layout.ballStart.x, layout.ballStart.y)
+    this.bodyLayer.addChild(bs)
+    this.drawSelection(layout, selectedId)
   }
 
   private drawElement(g: Graphics, e: Element): void {
@@ -95,9 +105,18 @@ export class EditorRenderer {
     }
   }
 
-  private drawSelection(elements: Element[], selectedId?: string): void {
+  private drawSelection(layout: Layout, selectedId?: string): void {
     this.selectionGfx.clear()
     if (!selectedId) return
+    if (selectedId === BALL_START_ID) {
+      this.selectionGfx
+        .circle(0, 0, BALL_RADIUS + 4)
+        .stroke({ color: SELECT_COLOR, width: 2 })
+      this.selectionGfx.position.set(layout.ballStart.x, layout.ballStart.y)
+      this.selectionGfx.rotation = 0
+      return
+    }
+    const elements = layout.elements
     const e = elements.find((x) => x.id === selectedId)
     if (!e) return
     if (RECT_KINDS.has(e.kind)) {

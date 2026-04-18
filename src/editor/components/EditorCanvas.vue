@@ -5,6 +5,9 @@ import { useEditorStore } from '../EditorState'
 import { snapPoint } from '../snap'
 import { hitTest } from '../HitTest'
 import type { Element, ElementKind } from '../types'
+import { BALL_RADIUS } from '../../game/constants'
+
+const BALL_START_ID = '__ballStart__'
 
 const store = useEditorStore()
 const canvas = ref<HTMLCanvasElement | null>(null)
@@ -31,6 +34,7 @@ function defaultElement(kind: ElementKind, x: number, y: number): Element {
     case 'flipperRight': return { id: uid(), kind, x, y }
     case 'arcRail':
     case 'gateRail':     return { id: uid(), kind, points: [], thickness: 6 }
+    case 'ballStart':    return { id: uid(), kind: 'wall', x, y, w: 0, h: 0, angle: 0 }
   }
 }
 
@@ -47,10 +51,23 @@ function pointer(ev: PointerEvent): { x: number; y: number; force: boolean } {
   return { x: snapped.x, y: snapped.y, force }
 }
 
+function distSq(a: { x: number; y: number }, b: { x: number; y: number }): number {
+  const dx = a.x - b.x, dy = a.y - b.y
+  return dx * dx + dy * dy
+}
+
 function onPointerDown(ev: PointerEvent): void {
   const p = pointer(ev)
   const m = store.mode
   if (m === 'select') {
+    // Ball-start marker takes priority — it's always drawn on top.
+    const bs = store.layout.ballStart
+    if (distSq(p, bs) <= BALL_RADIUS * BALL_RADIUS) {
+      store.selectedId = BALL_START_ID
+      dragging = true
+      dragOffset = { x: p.x - bs.x, y: p.y - bs.y }
+      return
+    }
     const hit = hitTest(p, store.layout.elements)
     store.selectedId = hit?.id
     if (hit && 'x' in hit) {
@@ -68,6 +85,10 @@ function onPointerDown(ev: PointerEvent): void {
 function onPointerMove(ev: PointerEvent): void {
   if (!dragging || !store.selectedId) return
   const p = pointer(ev)
+  if (store.selectedId === BALL_START_ID) {
+    store.updateSelected({ x: p.x - dragOffset.x, y: p.y - dragOffset.y } as Partial<Element>)
+    return
+  }
   const sel = store.layout.elements.find((e) => e.id === store.selectedId)
   if (!sel || sel.kind === 'arcRail' || sel.kind === 'gateRail') return
   store.updateSelected({ x: p.x - dragOffset.x, y: p.y - dragOffset.y } as Partial<Element>)
