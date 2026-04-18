@@ -1,5 +1,7 @@
 import RAPIER from '@dimforge/rapier2d-compat'
 import { buildClassicTable, type ClassicTable, type TableBody } from './tables/classic'
+import { buildCustomTable, type CustomTable } from './tables/custom'
+import type { Layout } from '../editor/types'
 import {
   BALL_RADIUS,
   BALL_START,
@@ -28,7 +30,8 @@ export class PhysicsWorld {
   world!: RAPIER.World
   ball!: RAPIER.RigidBody
   ballCollider!: RAPIER.Collider
-  table!: ClassicTable
+  table!: ClassicTable | CustomTable
+  private lastLayout?: Layout
   bodies: GameBody[] = []
   chargeLevel = 0
   ready = false
@@ -49,13 +52,16 @@ export class PhysicsWorld {
 
   constructor(private bus: EventBus) {}
 
-  async init(): Promise<void> {
+  async init(customLayout?: Layout): Promise<void> {
+    this.lastLayout = customLayout
     await RAPIER.init()
     this.world = new RAPIER.World({ x: 0, y: GRAVITY_Y })
     this.world.timestep = PHYSICS_STEP_MS / 1000
     this.eventQueue = new RAPIER.EventQueue(true)
 
-    this.table = buildClassicTable(this.world)
+    this.table = customLayout
+      ? buildCustomTable(this.world, customLayout)
+      : buildClassicTable(this.world)
 
     for (const tb of this.table.bodies) {
       for (let i = 0; i < tb.rb.numColliders(); i++) {
@@ -64,8 +70,9 @@ export class PhysicsWorld {
       }
     }
 
+    const start = customLayout?.ballStart ?? BALL_START
     const ballRbDesc = RAPIER.RigidBodyDesc.dynamic()
-      .setTranslation(BALL_START.x, BALL_START.y)
+      .setTranslation(start.x, start.y)
       .setCcdEnabled(true)
       .setLinearDamping(0.15)
       .setAngularDamping(0.3)
@@ -279,7 +286,7 @@ export class PhysicsWorld {
     this.bodies.length = 0
     this.charging = false
     this.chargeLevel = 0
-    await this.init()
+    await this.init(this.lastLayout)
   }
 
   destroy(): void {

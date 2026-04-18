@@ -1,5 +1,6 @@
 import { PhysicsWorld } from './PhysicsWorld'
 import { Renderer } from './Renderer'
+import type { Layout } from '../editor/types'
 import { GameLoop } from './GameLoop'
 import { InputController } from './InputController'
 import { Scoring } from './Scoring'
@@ -57,8 +58,8 @@ export class PinballGame {
     })
   }
 
-  async mount(canvas: HTMLCanvasElement): Promise<void> {
-    await this.physics.init()
+  async mount(canvas: HTMLCanvasElement, customLayout?: Layout): Promise<void> {
+    await this.physics.init(customLayout)
     await this.renderer.init(canvas)
     this.scoring.attach()
     this.audio.attach()

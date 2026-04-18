@@ -1,12 +1,24 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, useTemplateRef } from 'vue'
+import { useRoute } from 'vue-router'
 import { navigateToSpace } from '@construct-space/sdk'
 import { PinballGame } from '../game/PinballGame'
+import { LayoutStore } from '../editor/LayoutStore'
+import type { Layout } from '../editor/types'
 import { useGameSession } from '../composables/useGameSession'
 import { useHighScores } from '../composables/useHighScores'
 import Hud from '../components/Hud.vue'
 import GameOverModal from '../components/GameOverModal.vue'
 import LeaderboardTable from '../components/LeaderboardTable.vue'
+
+const route = useRoute()
+
+function loadLayoutFromQuery(): Layout | undefined {
+  const id = route.query.layout
+  if (typeof id !== 'string' || !id) return undefined
+  const store = new LayoutStore()
+  return store.get(id)
+}
 
 const canvasRef = useTemplateRef<HTMLCanvasElement>('canvasRef')
 const stageRef = useTemplateRef<HTMLDivElement>('stageRef')
@@ -45,7 +57,8 @@ onMounted(async () => {
       session.gameOver.value = true
     },
   })
-  await game.mount(canvasRef.value)
+  const layoutOverride = loadLayoutFromQuery()
+  await game.mount(canvasRef.value, layoutOverride)
   fitCanvas()
 
   if (stageRef.value) {
