@@ -102,58 +102,23 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   const wallT = 20
 
   // ── Geometry constants (single source of truth) ──────────────────────────
-  // Playfield interior: x ∈ [20, 480], width 460
-  // Gap strip:          x ∈ [490, 510], width 20  (purely visual divider)
+  // Playfield interior: x ∈ [20, 490], width 470
+  // Single divider:     x ∈ [490, 520], width 30  (replaces the old gap strip)
   // Lane interior:      x ∈ [520, 580], width 60
   // Lane center:        x = 550
-  const PF_INNER_RIGHT = 480
-  const GAP_LEFT = 490
-  const GAP_RIGHT = 510
+  const PF_INNER_RIGHT = 490
   const LANE_INNER_LEFT = 520
   const LANE_INNER_RIGHT = 580
   const LANE_CENTER_X = 550
-  const GATE_OPEN_Y = 110 // y above which the lane left wall is open (gate corridor)
+  const GATE_OPEN_Y = 110 // y above which the divider is open (gate corridor)
 
-  // ── Outer + box walls ────────────────────────────────────────────────────
-  // Outer left wall (playfield left).
+  // ── Outer walls ──────────────────────────────────────────────────────────
   bodies.push(fixedRect(world, 'leftWall', 'wall', wallT / 2, H / 2, wallT, H))
-  // Outer right wall (lane right).
   bodies.push(fixedRect(world, 'rightWallLane', 'wall', W - wallT / 2, H / 2, wallT, H))
-  // Top wall — seals everything at top.
   bodies.push(fixedRect(world, 'topWall', 'wall', W / 2, wallT / 2, W, wallT))
 
-  // Playfield right inner wall — runs from BELOW the gate opening down to bottom.
-  // Top opening (y < GATE_OPEN_Y) lets the gate rail deliver the ball from the
-  // lane into the upper playfield.
-  bodies.push(
-    fixedRect(
-      world,
-      'rightWallPF',
-      'wall',
-      (PF_INNER_RIGHT + GAP_LEFT) / 2,
-      (GATE_OPEN_Y + H) / 2,
-      GAP_LEFT - PF_INNER_RIGHT,
-      H - GATE_OPEN_Y,
-    ),
-  )
-
-  // Lane left wall — thick, runs from BELOW the gate opening down to the bottom
-  // so the ball can exit the lane upward into the gate corridor.
-  bodies.push(
-    fixedRect(
-      world,
-      'laneLeftWall',
-      'wall',
-      (GAP_RIGHT + LANE_INNER_LEFT) / 2,
-      (GATE_OPEN_Y + H) / 2,
-      LANE_INNER_LEFT - GAP_RIGHT,
-      H - GATE_OPEN_Y,
-    ),
-  )
-
-  // Gap-strip seals: top + bottom (so ball can't enter the visible separator).
-  bodies.push(fixedRect(world, 'gapCeiling', 'wall', (GAP_LEFT + GAP_RIGHT) / 2, 30, GAP_RIGHT - GAP_LEFT, 20))
-  bodies.push(fixedRect(world, 'gapFloor', 'wall', (GAP_LEFT + GAP_RIGHT) / 2, H - 10, GAP_RIGHT - GAP_LEFT, 20))
+  // (Lane left wall removed per user request — lane is now an open right
+  // section of the playfield, no divider blocking ball flow.)
 
   // Lane floor — covers full lane interior so the ball never falls between
   // laneLeftWall and rightWallLane.
