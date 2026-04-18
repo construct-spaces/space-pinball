@@ -101,48 +101,71 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   const bodies: TableBody[] = []
   const wallT = 20
 
-  // ── Playfield box (left) ─────────────────────────────────────────────────
+  // ── Geometry constants (single source of truth) ──────────────────────────
+  // Playfield interior: x ∈ [20, 480], width 460
+  // Gap strip:          x ∈ [490, 510], width 20  (purely visual divider)
+  // Lane interior:      x ∈ [520, 580], width 60
+  // Lane center:        x = 550
+  const PF_INNER_RIGHT = 480
+  const GAP_LEFT = 490
+  const GAP_RIGHT = 510
+  const LANE_INNER_LEFT = 520
+  const LANE_INNER_RIGHT = 580
+  const LANE_CENTER_X = 550
+  const GATE_OPEN_Y = 110 // y above which the lane left wall is open (gate corridor)
+
+  // ── Outer + box walls ────────────────────────────────────────────────────
+  // Outer left wall (playfield left).
   bodies.push(fixedRect(world, 'leftWall', 'wall', wallT / 2, H / 2, wallT, H))
-  // Playfield right inner wall — boundary between playfield and the visual
-  // separator strip. Top opening (y < 120) lets the gate rail pass through
-  // from the lane into the playfield interior.
-  bodies.push(fixedRect(world, 'rightWallPF', 'wall', 504, (120 + H) / 2, 8, H - 120))
-  // Wedge cap so a ball landing on the wall top slides LEFT into the playfield.
-  bodies.push(
-    fixedRect(world, 'rightWallPFCap', 'wall', 504, 117, 18, 4, { angle: -0.5, restitution: 0.2 }),
-  )
-
-  // ── Ball lane box (right) ────────────────────────────────────────────────
-  // Lane outer right wall.
+  // Outer right wall (lane right).
   bodies.push(fixedRect(world, 'rightWallLane', 'wall', W - wallT / 2, H / 2, wallT, H))
-  // Lane left wall — thick, runs from below the gate opening down to bottom.
-  // Top opening (y < 120) lets the ball exit lane via the gate rail.
-  bodies.push(fixedRect(world, 'laneLeftWall', 'wall', 530, (120 + H) / 2, 20, H - 120))
-  // Wedge cap so a ball landing on the wall top slides RIGHT back into the lane.
-  bodies.push(
-    fixedRect(world, 'laneLeftWallCap', 'wall', 530, 117, 28, 4, { angle: 0.5, restitution: 0.2 }),
-  )
-
-  // Flat top wall above all boxes — seals top of both playfield + lane.
+  // Top wall — seals everything at top.
   bodies.push(fixedRect(world, 'topWall', 'wall', W / 2, wallT / 2, W, wallT))
 
-  // Bottom seal across the visual gap between playfield right wall (x≈488)
-  // and lane left wall (x=500). Prevents ball from settling in the strip.
-  bodies.push(fixedRect(world, 'gapFloor', 'wall', 494, H - 10, 12, 20))
+  // Playfield right inner wall — full height, separates playfield from gap.
+  // (PF top reaches topWall; ball never escapes upward into the gap.)
+  bodies.push(fixedRect(world, 'rightWallPF', 'wall', (PF_INNER_RIGHT + GAP_LEFT) / 2, H / 2, GAP_LEFT - PF_INNER_RIGHT, H))
 
-  // (Top arch removed — topWall already seals top; arch was clutter.)
+  // Lane left wall — thick, runs from BELOW the gate opening down to the bottom
+  // so the ball can exit the lane upward into the gate corridor.
+  bodies.push(
+    fixedRect(
+      world,
+      'laneLeftWall',
+      'wall',
+      (GAP_RIGHT + LANE_INNER_LEFT) / 2,
+      (GATE_OPEN_Y + H) / 2,
+      LANE_INNER_LEFT - GAP_RIGHT,
+      H - GATE_OPEN_Y,
+    ),
+  )
 
-  // Lane floor (full width of lane interior x ∈ [520, 580])
-  bodies.push(fixedRect(world, 'laneFloor', 'wall', 550, H - 12, 60, 16))
+  // Gap-strip seals: top + bottom (so ball can't enter the visible separator).
+  bodies.push(fixedRect(world, 'gapCeiling', 'wall', (GAP_LEFT + GAP_RIGHT) / 2, 30, GAP_RIGHT - GAP_LEFT, 20))
+  bodies.push(fixedRect(world, 'gapFloor', 'wall', (GAP_LEFT + GAP_RIGHT) / 2, H - 10, GAP_RIGHT - GAP_LEFT, 20))
 
-  // Curved exit rail (plunger lane → upper playfield) — 3 segs, simpler arc.
-  // Starts above the lane (lane left wall ends at y=120; this rail is above
-  // that) and lands inside the upper playfield (well below topWall y=20).
+  // Lane floor — covers full lane interior so the ball never falls between
+  // laneLeftWall and rightWallLane.
+  bodies.push(
+    fixedRect(
+      world,
+      'laneFloor',
+      'wall',
+      LANE_CENTER_X,
+      H - 12,
+      LANE_INNER_RIGHT - LANE_INNER_LEFT,
+      16,
+    ),
+  )
+
+  // Curved exit rail (lane → playfield) — single deflector + 2 follow-on segs.
+  // Right end butts against rightWallLane inner face at (LANE_INNER_RIGHT, 70).
+  // Slope is steep so a ball can't rest on it.
   {
     const pts: Array<[number, number]> = [
-      [560, 100],
-      [440, 50],
-      [280, 50],
+      [LANE_INNER_RIGHT, 70],
+      [440, 40],
+      [280, 60],
     ]
     for (let i = 0; i < pts.length - 1; i++) {
       const [x0, y0] = pts[i]
@@ -260,43 +283,24 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   })
   bodies.push(drain)
 
-  // Bottom walls flanking drain (right end stops at divider inner edge)
-  const leftBottomX0 = wallT
-  const leftBottomX1 = drainCenterX - drainWidth / 2
-  bodies.push(
-    fixedRect(
-      world,
-      'bottomL',
-      'wall',
-      (leftBottomX0 + leftBottomX1) / 2,
-      H - 10,
-      leftBottomX1 - leftBottomX0,
-      20,
-    ),
-  )
-  const rightBottomX0 = drainCenterX + drainWidth / 2
-  // Bottom-right wall ends at the playfield right inner wall (x=484, half-w 4 → 480).
-  const rightBottomX1 = 480
-  bodies.push(
-    fixedRect(
-      world,
-      'bottomR',
-      'wall',
-      (rightBottomX0 + rightBottomX1) / 2,
-      H - 10,
-      rightBottomX1 - rightBottomX0,
-      20,
-    ),
-  )
-
-  // Outlane corner-fillers — diagonal ramps closing off the bottom-left and
-  // bottom-right dead zones so a slow ball slides toward the drain.
-  bodies.push(
-    fixedRect(world, 'outlaneL', 'wall', 75, 860, 130, 6, { angle: 0.32, restitution: 0.3 }),
-  )
-  bodies.push(
-    fixedRect(world, 'outlaneR', 'wall', 429, 860, 130, 6, { angle: -0.32, restitution: 0.3 }),
-  )
+  // Bottom walls flanking drain — gently angled so a stationary ball slides
+  // toward the drain instead of resting in the corners.
+  {
+    const x0 = wallT, x1 = drainCenterX - drainWidth / 2
+    const y0 = 880, y1 = 890 // left side: outer up, drain side down
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2
+    const len = Math.hypot(x1 - x0, y1 - y0)
+    const ang = Math.atan2(y1 - y0, x1 - x0)
+    bodies.push(fixedRect(world, 'bottomL', 'wall', cx, cy, len, 20, { angle: ang }))
+  }
+  {
+    const x0 = drainCenterX + drainWidth / 2, x1 = PF_INNER_RIGHT
+    const y0 = 890, y1 = 880 // right side: drain side down, outer up
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2
+    const len = Math.hypot(x1 - x0, y1 - y0)
+    const ang = Math.atan2(y1 - y0, x1 - x0)
+    bodies.push(fixedRect(world, 'bottomR', 'wall', cx, cy, len, 20, { angle: ang }))
+  }
 
   // Flippers
   const flipperY = H - 100
@@ -316,6 +320,6 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
     rightPivot,
     // Plunger top sits at lane-floor top (y=880). Ball at rest center y=868
     // with radius 12 → ball bottom y=880, tangent to plunger top (no overlap).
-    plungerVisual: { x: 550, y: 880, w: 28, h: 14 },
+    plungerVisual: { x: LANE_CENTER_X, y: 880, w: 28, h: 14 },
   }
 }
