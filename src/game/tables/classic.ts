@@ -106,14 +106,22 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
   // Playfield right inner wall — boundary between playfield and the visual
   // separator strip. Top opening (y < 120) lets the gate rail pass through
   // from the lane into the playfield interior.
-  bodies.push(fixedRect(world, 'rightWallPF', 'wall', 484, (120 + H) / 2, 8, H - 120))
+  bodies.push(fixedRect(world, 'rightWallPF', 'wall', 504, (120 + H) / 2, 8, H - 120))
+  // Wedge cap so a ball landing on the wall top slides LEFT into the playfield.
+  bodies.push(
+    fixedRect(world, 'rightWallPFCap', 'wall', 504, 117, 18, 4, { angle: -0.5, restitution: 0.2 }),
+  )
 
   // ── Ball lane box (right) ────────────────────────────────────────────────
   // Lane outer right wall.
   bodies.push(fixedRect(world, 'rightWallLane', 'wall', W - wallT / 2, H / 2, wallT, H))
   // Lane left wall — thick, runs from below the gate opening down to bottom.
   // Top opening (y < 120) lets the ball exit lane via the gate rail.
-  bodies.push(fixedRect(world, 'laneLeftWall', 'wall', 510, (120 + H) / 2, 20, H - 120))
+  bodies.push(fixedRect(world, 'laneLeftWall', 'wall', 530, (120 + H) / 2, 20, H - 120))
+  // Wedge cap so a ball landing on the wall top slides RIGHT back into the lane.
+  bodies.push(
+    fixedRect(world, 'laneLeftWallCap', 'wall', 530, 117, 28, 4, { angle: 0.5, restitution: 0.2 }),
+  )
 
   // Flat top wall above all boxes — seals top of both playfield + lane.
   bodies.push(fixedRect(world, 'topWall', 'wall', W / 2, wallT / 2, W, wallT))
@@ -279,6 +287,15 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
       rightBottomX1 - rightBottomX0,
       20,
     ),
+  )
+
+  // Outlane corner-fillers — diagonal ramps closing off the bottom-left and
+  // bottom-right dead zones so a slow ball slides toward the drain.
+  bodies.push(
+    fixedRect(world, 'outlaneL', 'wall', 75, 860, 130, 6, { angle: 0.32, restitution: 0.3 }),
+  )
+  bodies.push(
+    fixedRect(world, 'outlaneR', 'wall', 429, 860, 130, 6, { angle: -0.32, restitution: 0.3 }),
   )
 
   // Flippers
