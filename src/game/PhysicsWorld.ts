@@ -43,6 +43,9 @@ export class PhysicsWorld {
   private ballArmed = false
   private charging = false
   private chargeStartAt = 0
+  /** Debug tracing — toggle in console: `window.__pinballTrace = false`. */
+  private traceEnabled = true
+  private traceTick = 0
 
   constructor(private bus: EventBus) {}
 
@@ -82,6 +85,23 @@ export class PhysicsWorld {
       ballStart: BALL_START,
       bodyCount: this.table.bodies.length,
     })
+
+    // Tracing setup — list all wall + structural bodies once at startup.
+    if (this.isTracing()) {
+      const wallIds = this.table.bodies
+        .filter((b) => b.kind === 'wall' || b.kind === 'arcRail')
+        .map((b) => {
+          const p = b.rb.translation()
+          const s = b.shape.type === 'rect' ? `${b.shape.w}x${b.shape.h}` : `r=${b.shape.r}`
+          return `${b.id}@(${p.x.toFixed(0)},${p.y.toFixed(0)}) ${s}`
+        })
+      console.log('[pinball][trace] walls:', wallIds.join(' | '))
+    }
+  }
+
+  private isTracing(): boolean {
+    const flag = (globalThis as unknown as { __pinballTrace?: boolean }).__pinballTrace
+    return flag !== undefined ? flag : this.traceEnabled
   }
 
   step(): void {
@@ -103,6 +123,13 @@ export class PhysicsWorld {
       const ballMeta = a.kind === 'ball' ? a : b.kind === 'ball' ? b : null
       const otherMeta = ballMeta === a ? b : a
       if (!ballMeta) return
+      if (this.isTracing()) {
+        const bp = this.ball.translation()
+        const bv = this.ball.linvel()
+        console.log(
+          `[pinball][trace] hit ${otherMeta.kind}#${otherMeta.id} ball@(${bp.x.toFixed(0)},${bp.y.toFixed(0)}) v=(${bv.x.toFixed(0)},${bv.y.toFixed(0)})`,
+        )
+      }
       this.onBallHit(otherMeta)
     })
 
@@ -110,6 +137,18 @@ export class PhysicsWorld {
     if (this.ballArmed && (p.y > PLAYFIELD_HEIGHT + 200 || p.x < -200 || p.x > PLAYFIELD_WIDTH + 200)) {
       this.ballArmed = false
       this.bus.emit('ballLost', undefined)
+    }
+
+    // Periodic ball-state log (every 30 frames ≈ 0.5s).
+    if (this.isTracing()) {
+      this.traceTick = (this.traceTick + 1) % 30
+      if (this.traceTick === 0) {
+        const v = this.ball.linvel()
+        const speed = Math.hypot(v.x, v.y)
+        console.log(
+          `[pinball][trace] ball@(${p.x.toFixed(0)},${p.y.toFixed(0)}) v=(${v.x.toFixed(0)},${v.y.toFixed(0)}) speed=${speed.toFixed(0)} armed=${this.ballArmed}`,
+        )
+      }
     }
 
     this.refreshSnapshots()
