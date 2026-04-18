@@ -10,6 +10,17 @@ function update(field: string, value: number): void {
   store.updateSelected({ [field]: value } as Record<string, number>)
 }
 
+const RAD_TO_DEG = 180 / Math.PI
+const DEG_TO_RAD = Math.PI / 180
+
+function updateAngleDeg(deg: number): void {
+  store.updateSelected({ angle: deg * DEG_TO_RAD } as Record<string, number>)
+}
+
+function angleDeg(rad: number): string {
+  return (rad * RAD_TO_DEG).toFixed(1)
+}
+
 function del(): void {
   store.deleteSelected()
 }
@@ -25,7 +36,7 @@ defineExpose({ RECT_KINDS, CIRCLE_KINDS, FLIPPER_KINDS, POLYLINE_KINDS })
       <label>y <input type="number" :value="(sel as any).y" @change="update('y', +($event.target as HTMLInputElement).value)" /></label>
       <label>w <input type="number" :value="(sel as any).w" @change="update('w', +($event.target as HTMLInputElement).value)" /></label>
       <label>h <input type="number" :value="(sel as any).h" @change="update('h', +($event.target as HTMLInputElement).value)" /></label>
-      <label>angle <input type="number" step="0.05" :value="(sel as any).angle" @change="update('angle', +($event.target as HTMLInputElement).value)" /></label>
+      <label>angle° <input type="number" step="1" :value="angleDeg((sel as any).angle)" @change="updateAngleDeg(+($event.target as HTMLInputElement).value)" /></label>
     </template>
     <template v-else-if="CIRCLE_KINDS.has(sel.kind)">
       <label>x <input type="number" :value="(sel as any).x" @change="update('x', +($event.target as HTMLInputElement).value)" /></label>
