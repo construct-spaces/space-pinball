@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useEditorStore } from '../EditorState'
 import { RECT_KINDS, CIRCLE_KINDS, FLIPPER_KINDS, POLYLINE_KINDS } from '../types'
 import { Trash2, Minus, Plus } from 'lucide-vue-next'
@@ -34,6 +35,53 @@ function bumpAngleDeg(step: number): void {
 
 function del(): void {
   store.deleteSelected()
+}
+
+const TRIGGER_OPTIONS = [
+  { value: '', label: 'always-on' },
+  { value: 'bumper', label: 'on bumper' },
+  { value: 'slingshot', label: 'on slingshot' },
+  { value: 'rollover', label: 'on rollover' },
+  { value: 'rolloverBank', label: 'on rollover bank' },
+  { value: 'ballLost', label: 'on ball lost' },
+  { value: 'gameOver', label: 'on game over' },
+] as const
+
+const elementOptions = computed(() =>
+  store.layout.elements.map((e) => ({ value: `hit:${e.id}`, label: `hit ${e.kind} ${e.id}` })),
+)
+
+function decorRef(): { trigger?: { type: string; sourceId?: string } } | undefined {
+  const s = sel.value as unknown as { kind?: string }
+  if (!s || !['light', 'text', 'emitter'].includes(s.kind ?? '')) return undefined
+  return s as unknown as { trigger?: { type: string; sourceId?: string } }
+}
+
+function triggerValue(): string {
+  const d = decorRef()
+  if (!d?.trigger) return ''
+  if (d.trigger.type === 'hit' && d.trigger.sourceId) return `hit:${d.trigger.sourceId}`
+  return d.trigger.type
+}
+
+function setTrigger(value: string): void {
+  if (!value) {
+    store.updateDecor({ trigger: undefined } as never)
+    return
+  }
+  if (value.startsWith('hit:')) {
+    store.updateDecor({ trigger: { type: 'hit', sourceId: value.slice(4) } } as never)
+  } else {
+    store.updateDecor({ trigger: { type: value as never } } as never)
+  }
+}
+
+function setStr(field: string, v: string): void {
+  store.updateDecor({ [field]: v } as never)
+}
+
+function setNum(field: string, v: number): void {
+  store.updateDecor({ [field]: v } as never)
 }
 </script>
 
@@ -167,6 +215,148 @@ function del(): void {
         </div>
         <div class="info-box">
           <span class="hint">Ball spawn point — cannot delete</span>
+        </div>
+      </template>
+
+      <template v-else-if="sel.kind === 'light'">
+        <div class="prop-row">
+          <span class="prop-lbl">X</span>
+          <div class="number-input">
+            <button class="step-btn" @click="bump('x', -10)"><Minus :size="14" /></button>
+            <input type="number" :value="getVal('x')" @change="setVal('x', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="bump('x', 10)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-lbl">Y</span>
+          <div class="number-input">
+            <button class="step-btn" @click="bump('y', -10)"><Minus :size="14" /></button>
+            <input type="number" :value="getVal('y')" @change="setVal('y', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="bump('y', 10)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-lbl">R</span>
+          <div class="number-input">
+            <button class="step-btn" @click="setNum('r', getVal('r') - 5)"><Minus :size="14" /></button>
+            <input type="number" :value="getVal('r')" @change="setNum('r', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="setNum('r', getVal('r') + 5)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-lbl">α</span>
+          <div class="number-input">
+            <button class="step-btn" @click="setNum('intensity', Math.max(0, getVal('intensity') - 0.1))"><Minus :size="14" /></button>
+            <input type="number" step="0.05" :value="getVal('intensity')" @change="setNum('intensity', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="setNum('intensity', Math.min(1, getVal('intensity') + 0.1))"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row full">
+          <span class="prop-lbl">color</span>
+          <input type="text" :value="(sel as any).color" @change="setStr('color', ($event.target as HTMLInputElement).value)" />
+        </div>
+        <div class="prop-row full">
+          <span class="prop-lbl">trigger</span>
+          <select :value="triggerValue()" @change="setTrigger(($event.target as HTMLSelectElement).value)">
+            <option v-for="opt in TRIGGER_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            <option v-for="opt in elementOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+      </template>
+
+      <template v-else-if="sel.kind === 'text'">
+        <div class="prop-row">
+          <span class="prop-lbl">X</span>
+          <div class="number-input">
+            <button class="step-btn" @click="bump('x', -10)"><Minus :size="14" /></button>
+            <input type="number" :value="getVal('x')" @change="setVal('x', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="bump('x', 10)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-lbl">Y</span>
+          <div class="number-input">
+            <button class="step-btn" @click="bump('y', -10)"><Minus :size="14" /></button>
+            <input type="number" :value="getVal('y')" @change="setVal('y', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="bump('y', 10)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row full">
+          <span class="prop-lbl">text</span>
+          <input type="text" :value="(sel as any).text" @change="setStr('text', ($event.target as HTMLInputElement).value)" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-lbl">size</span>
+          <div class="number-input">
+            <button class="step-btn" @click="setNum('size', getVal('size') - 2)"><Minus :size="14" /></button>
+            <input type="number" :value="getVal('size')" @change="setNum('size', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="setNum('size', getVal('size') + 2)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row full">
+          <span class="prop-lbl">color</span>
+          <input type="text" :value="(sel as any).color" @change="setStr('color', ($event.target as HTMLInputElement).value)" />
+        </div>
+        <div class="prop-row full">
+          <span class="prop-lbl">trigger</span>
+          <select :value="triggerValue()" @change="setTrigger(($event.target as HTMLSelectElement).value)">
+            <option v-for="opt in TRIGGER_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            <option v-for="opt in elementOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+      </template>
+
+      <template v-else-if="sel.kind === 'emitter'">
+        <div class="prop-row">
+          <span class="prop-lbl">X</span>
+          <div class="number-input">
+            <button class="step-btn" @click="bump('x', -10)"><Minus :size="14" /></button>
+            <input type="number" :value="getVal('x')" @change="setVal('x', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="bump('x', 10)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-lbl">Y</span>
+          <div class="number-input">
+            <button class="step-btn" @click="bump('y', -10)"><Minus :size="14" /></button>
+            <input type="number" :value="getVal('y')" @change="setVal('y', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="bump('y', 10)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-lbl">count</span>
+          <div class="number-input">
+            <button class="step-btn" @click="setNum('count', Math.max(1, getVal('count') - 5))"><Minus :size="14" /></button>
+            <input type="number" :value="getVal('count')" @change="setNum('count', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="setNum('count', getVal('count') + 5)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-lbl">spread</span>
+          <div class="number-input">
+            <button class="step-btn" @click="setNum('spread', getVal('spread') - 0.2)"><Minus :size="14" /></button>
+            <input type="number" step="0.1" :value="getVal('spread')" @change="setNum('spread', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="setNum('spread', getVal('spread') + 0.2)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-lbl">speed</span>
+          <div class="number-input">
+            <button class="step-btn" @click="setNum('speed', getVal('speed') - 25)"><Minus :size="14" /></button>
+            <input type="number" :value="getVal('speed')" @change="setNum('speed', +($event.target as HTMLInputElement).value)" />
+            <button class="step-btn" @click="setNum('speed', getVal('speed') + 25)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="prop-row full">
+          <span class="prop-lbl">color</span>
+          <input type="text" :value="(sel as any).color" @change="setStr('color', ($event.target as HTMLInputElement).value)" />
+        </div>
+        <div class="prop-row full">
+          <span class="prop-lbl">trigger</span>
+          <select :value="triggerValue()" @change="setTrigger(($event.target as HTMLSelectElement).value)">
+            <option v-for="opt in TRIGGER_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            <option v-for="opt in elementOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
         </div>
       </template>
     </div>
@@ -334,5 +524,22 @@ function del(): void {
   color: #6b7280;
   font-size: 13px;
   height: 120px;
+}
+
+.prop-row.full {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.prop-row.full select,
+.prop-row.full input[type='text'] {
+  width: 100%;
+  padding: 4px 6px;
+  background: #1a1a26;
+  color: #eee;
+  border: 1px solid #333;
+  border-radius: 4px;
+  font-size: 13px;
 }
 </style>
