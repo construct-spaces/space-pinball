@@ -8,7 +8,9 @@
     "build:vite": "vite build",
     "dev": "construct space dev",
     "check": "vue-tsc --noEmit && eslint .",
-    "validate": "construct space validate"
+    "validate": "construct space validate",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "peerDependencies": {
     "vue": "^3.5.0",
@@ -27,11 +29,13 @@
   "devDependencies": {
     "@construct-space/cli": "latest",
     "@vitejs/plugin-vue": "^5.2.3",
+    "@vitest/ui": "^4.1.4",
     "@vue/eslint-config-typescript": "^14.0.0",
     "eslint": "^9.0.0",
     "eslint-plugin-vue": "^10.0.0",
     "typescript": "^5.9.3",
     "vite": "^6.3.5",
+    "vitest": "^4.1.4",
     "vue-tsc": "^3.2.5"
   }
 }
