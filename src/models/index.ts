@@ -4,3 +4,4 @@
 // Export your models here:
 // export { User } from './User'
 export { HighScore } from './HighScore'
+export { PublishedLayout } from './PublishedLayout'
