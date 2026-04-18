@@ -96,6 +96,20 @@ export class Renderer {
       if (!seen.has(id)) g.visible = false
     }
 
+    // Rollover lit-state — re-tint when state flips
+    for (const [id, tb] of physics.table.rolloverById) {
+      const g = this.gfxFor.get(id)
+      if (!g) continue
+      const lit = physics.litRollovers.has(id)
+      const tagged = g as Graphics & { __lit?: boolean }
+      if (tagged.__lit === lit) continue
+      tagged.__lit = lit
+      if (tb.shape.type !== 'rect') continue
+      g.clear()
+        .rect(-tb.shape.w / 2, -tb.shape.h / 2, tb.shape.w, tb.shape.h)
+        .fill({ color: lit ? COLORS.rolloverLit : COLORS.rolloverUnlit })
+    }
+
     // Ball trail — ring buffer, no per-frame alloc.
     if (ball) {
       const cap = this.trailBuf.length
@@ -116,7 +130,7 @@ export class Renderer {
     // Plunger visual
     const pv = physics.table.plungerVisual
     const charge = this.chargeRef.charge
-    const drop = 12 * charge
+    const drop = Math.min(12 * charge, 10)
     this.plungerGfx
       .clear()
       .rect(pv.x - pv.w / 2, pv.y + drop, pv.w, pv.h)
