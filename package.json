@@ -1,0 +1,37 @@
+{
+  "name": "@construct-spaces/space-pinball",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "construct space build",
+    "build:vite": "vite build",
+    "dev": "construct space dev",
+    "check": "vue-tsc --noEmit && eslint .",
+    "validate": "construct space validate"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0",
+    "pinia": "^3.0.0",
+    "@vueuse/core": "^14.0.0"
+  },
+  "dependencies": {
+    "@construct-space/graph": "latest",
+    "@construct-space/sdk": "latest",
+    "@construct-space/ui": "latest",
+    "@dimforge/rapier2d-compat": "^0.14.0",
+    "lucide-vue-next": "^1.0.0",
+    "pixi.js": "^8.18.1",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@construct-space/cli": "latest",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "@vue/eslint-config-typescript": "^14.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-vue": "^10.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.5",
+    "vue-tsc": "^3.2.5"
+  }
+}

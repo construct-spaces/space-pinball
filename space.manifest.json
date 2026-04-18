@@ -1,0 +1,39 @@
+{
+  "id": "pinball",
+  "name": "Pinball Arcade",
+  "version": "0.1.0",
+  "description": "Classic pinball arcade with real physics — Matter.js + PixiJS",
+  "author": {
+    "name": "Construct"
+  },
+  "icon": "i-lucide-gamepad-2",
+  "scope": "project",
+  "minConstructVersion": "0.2.0",
+  "navigation": {
+    "label": "Pinball",
+    "icon": "i-lucide-gamepad-2",
+    "to": "pinball",
+    "order": 100
+  },
+  "pages": [
+    {
+      "path": "",
+      "label": "Arcade",
+      "icon": "i-lucide-gamepad-2",
+      "default": true
+    },
+    {
+      "path": "play",
+      "label": "Play",
+      "icon": "i-lucide-play"
+    },
+    {
+      "path": "leaderboard",
+      "label": "Leaderboard",
+      "icon": "i-lucide-trophy"
+    }
+  ],
+  "keywords": ["pinball", "game", "arcade"],
+  "agent": "agent/config.md",
+  "skills": ["agent/skills/default.md"]
+}
