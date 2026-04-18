@@ -38,9 +38,9 @@ describe('classic table', () => {
     expect([...t.rolloverById.keys()]).toEqual(['roll0', 'roll1', 'roll2'])
   })
 
-  it('plunger visual sits at y=874 with h=14', () => {
+  it('plunger visual top sits at lane-floor top so it does not overlap ball', () => {
     const t = buildClassicTable(world)
-    expect(t.plungerVisual.y).toBe(874)
+    expect(t.plungerVisual.y).toBe(880)
     expect(t.plungerVisual.h).toBe(14)
   })
 })

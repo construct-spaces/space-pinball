@@ -316,6 +316,8 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
     rolloverById,
     leftPivot,
     rightPivot,
-    plungerVisual: { x: 550, y: 874, w: 28, h: 14 },
+    // Plunger top sits at lane-floor top (y=880). Ball at rest center y=868
+    // with radius 12 → ball bottom y=880, tangent to plunger top (no overlap).
+    plungerVisual: { x: 550, y: 880, w: 28, h: 14 },
   }
 }
