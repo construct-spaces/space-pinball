@@ -257,10 +257,10 @@ export function buildClassicTable(world: RAPIER.World): ClassicTable {
     bodies.push(fixedCircle(world, `kp${i}`, 'post', x, y, 8, { restitution: 0.8 }))
   }
 
-  // Inlane / outlane guides — kept clear of plunger lane divider (x=520).
-  // Right guide right-end x ≈ 470 + 50*cos(0.54) ≈ 513, safely left of 517.
-  bodies.push(fixedRect(world, 'guideL', 'wall', 130, 790, 100, 6, { angle: 0.54 }))
-  bodies.push(fixedRect(world, 'guideR', 'wall', 470, 790, 100, 6, { angle: -0.54 }))
+  // Inlane / outlane guides — pulled far clear of plunger lane (divider x=520).
+  // Right guide right-end x ≈ 430 + 40*cos(0.54) ≈ 464, well clear of divider.
+  bodies.push(fixedRect(world, 'guideL', 'wall', 170, 800, 80, 6, { angle: 0.54 }))
+  bodies.push(fixedRect(world, 'guideR', 'wall', 430, 800, 80, 6, { angle: -0.54 }))
 
   // Drain sensor
   const leftPivotX = 180,
