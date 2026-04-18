@@ -9,8 +9,13 @@ import type { Element, ElementKind } from '../types'
 const store = useEditorStore()
 const canvas = ref<HTMLCanvasElement | null>(null)
 const renderer = new EditorRenderer()
+const zoom = ref(1)
 let dragging = false
 let dragOffset = { x: 0, y: 0 }
+
+const ZOOM_MIN = 0.5
+const ZOOM_MAX = 3
+const ZOOM_STEP = 0.1
 
 function uid(): string { return crypto.randomUUID() }
 
@@ -29,9 +34,14 @@ function defaultElement(kind: ElementKind, x: number, y: number): Element {
   }
 }
 
+// Convert pointer coords to playfield coords, accounting for CSS zoom.
 function pointer(ev: PointerEvent): { x: number; y: number; force: boolean } {
   const rect = (ev.target as HTMLCanvasElement).getBoundingClientRect()
-  const raw = { x: ev.clientX - rect.left, y: ev.clientY - rect.top }
+  const scale = rect.width / store.layout.width
+  const raw = {
+    x: (ev.clientX - rect.left) / scale,
+    y: (ev.clientY - rect.top) / scale,
+  }
   const force = ev.shiftKey
   const snapped = snapPoint(raw, 10, force)
   return { x: snapped.x, y: snapped.y, force }
@@ -75,6 +85,23 @@ function onDoubleClick(): void {
   }
 }
 
+function onWheel(ev: WheelEvent): void {
+  if (!ev.ctrlKey && !ev.metaKey) return
+  ev.preventDefault()
+  const dir = ev.deltaY < 0 ? 1 : -1
+  zoom.value = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom.value + dir * ZOOM_STEP))
+}
+
+function zoomIn(): void {
+  zoom.value = Math.min(ZOOM_MAX, zoom.value + ZOOM_STEP)
+}
+function zoomOut(): void {
+  zoom.value = Math.max(ZOOM_MIN, zoom.value - ZOOM_STEP)
+}
+function zoomReset(): void {
+  zoom.value = 1
+}
+
 function onKey(ev: KeyboardEvent): void {
   if (ev.key === 'Escape') {
     store.mode = 'select'
@@ -87,6 +114,15 @@ function onKey(ev: KeyboardEvent): void {
   } else if ((ev.metaKey || ev.ctrlKey) && (ev.key === 'Z' || (ev.shiftKey && ev.key === 'z'))) {
     ev.preventDefault()
     store.redo()
+  } else if ((ev.metaKey || ev.ctrlKey) && (ev.key === '=' || ev.key === '+')) {
+    ev.preventDefault()
+    zoomIn()
+  } else if ((ev.metaKey || ev.ctrlKey) && ev.key === '-') {
+    ev.preventDefault()
+    zoomOut()
+  } else if ((ev.metaKey || ev.ctrlKey) && ev.key === '0') {
+    ev.preventDefault()
+    zoomReset()
   }
 }
 
@@ -109,15 +145,62 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <canvas
-    ref="canvas"
-    @pointerdown="onPointerDown"
-    @pointermove="onPointerMove"
-    @pointerup="onPointerUp"
-    @dblclick="onDoubleClick"
-  />
+  <div class="canvas-root">
+    <div class="zoom-bar">
+      <button title="Zoom out (⌘-)" @click="zoomOut">−</button>
+      <span class="zoom-val">{{ Math.round(zoom * 100) }}%</span>
+      <button title="Zoom in (⌘=)" @click="zoomIn">+</button>
+      <button title="Reset (⌘0)" @click="zoomReset">⟳</button>
+    </div>
+    <div class="canvas-host" :style="{ width: `${store.layout.width * zoom}px`, height: `${store.layout.height * zoom}px` }">
+      <canvas
+        ref="canvas"
+        :style="{ width: `${store.layout.width * zoom}px`, height: `${store.layout.height * zoom}px` }"
+        @pointerdown="onPointerDown"
+        @pointermove="onPointerMove"
+        @pointerup="onPointerUp"
+        @dblclick="onDoubleClick"
+        @wheel="onWheel"
+      />
+    </div>
+  </div>
 </template>
 
 <style scoped>
-canvas { display: block; background: #05050d; }
+.canvas-root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.zoom-bar {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  color: #ddd;
+}
+.zoom-bar button {
+  width: 28px;
+  height: 28px;
+  background: #222;
+  color: #ddd;
+  border: 1px solid #333;
+  cursor: pointer;
+  font-size: 14px;
+}
+.zoom-bar button:hover {
+  background: #333;
+}
+.zoom-val {
+  min-width: 48px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.canvas-host {
+  border: 1px solid #222;
+}
+canvas {
+  display: block;
+  background: #05050d;
+}
 </style>

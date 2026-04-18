@@ -7,12 +7,16 @@ import LayoutsSidebar from '../editor/components/LayoutsSidebar.vue'
 
 <template>
   <div class="editor">
-    <LayoutsSidebar />
-    <div class="canvas-wrap">
+    <aside class="col left">
+      <LayoutsSidebar />
+      <Palette />
+    </aside>
+    <main class="canvas-wrap">
       <EditorCanvas />
+    </main>
+    <aside class="col right">
       <PropertyPanel />
-    </div>
-    <Palette />
+    </aside>
   </div>
 </template>
 
@@ -23,12 +27,24 @@ import LayoutsSidebar from '../editor/components/LayoutsSidebar.vue'
   background: #05050d;
   color: #ddd;
 }
+.col {
+  display: flex;
+  flex-direction: column;
+}
+.col.left {
+  min-width: 200px;
+  border-right: 1px solid #222;
+}
+.col.right {
+  min-width: 220px;
+  border-left: 1px solid #222;
+}
 .canvas-wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px;
-  gap: 8px;
+  padding: 12px;
+  overflow: auto;
 }
 </style>
