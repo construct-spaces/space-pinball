@@ -40,5 +40,8 @@
   ],
   "keywords": ["pinball", "game", "arcade"],
   "agent": "agent/config.md",
-  "skills": ["agent/skills/default.md"]
+  "skills": ["agent/skills/default.md"],
+  "graph": {
+    "bundle_id": "pinball-suite"
+  }
 }
