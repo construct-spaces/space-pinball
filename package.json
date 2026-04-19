@@ -18,7 +18,7 @@
     "@vueuse/core": "^14.0.0"
   },
   "dependencies": {
-    "@construct-space/graph": "latest",
+    "@construct-space/graph": "^0.4.0",
     "@construct-space/sdk": "latest",
     "@construct-space/ui": "latest",
     "@dimforge/rapier2d-compat": "^0.14.0",

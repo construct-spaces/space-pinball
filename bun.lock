@@ -5,7 +5,7 @@
     "": {
       "name": "@construct-spaces/space-pinball",
       "dependencies": {
-        "@construct-space/graph": "latest",
+        "@construct-space/graph": "^0.4.0",
         "@construct-space/sdk": "latest",
         "@construct-space/ui": "latest",
         "@dimforge/rapier2d-compat": "^0.14.0",
@@ -43,7 +43,7 @@
 
     "@construct-space/cli": ["@construct-space/cli@1.1.12", "", { "dependencies": { "@inquirer/prompts": "^8.3.2", "chalk": "^5.6.2", "chokidar": "^5.0.0", "commander": "^14.0.3", "ora": "^9.3.0" }, "bin": { "construct": "dist/index.js" } }, "sha512-kh2C5Q66Bwz/5NGJ9ytJNcwL9imtvuiWSn50aXNvYkY53NlU1GJEOuyxvCuVvvxxNS9x1y+zOO5/UsqWd0WkgQ=="],
 
-    "@construct-space/graph": ["@construct-space/graph@0.3.5", "", {}, "sha512-ZCCenuLlhWAhpPUiPzY1AVIkBuUMZK3uI1Osv1FJmvyAECdLV+9Th+EZNaDjz9CzH4UCeyXAv8qRxA1RfbzaQg=="],
+    "@construct-space/graph": ["@construct-space/graph@0.4.0", "", {}, "sha512-M1rWEAczNDSj6JM+0UU1ctslalvGUgbWC3GmLQdZTrejzWIN9/fPYG4zGzkeWGfVzxwcQErTYKD7k/z1Ow2cUQ=="],
 
     "@construct-space/sdk": ["@construct-space/sdk@0.4.0", "", { "dependencies": { "zod": "^4.3.6" }, "peerDependencies": { "vue": "^3.5.0" } }, "sha512-6ugaOaN6zJy1OnNxzvdlyo/gkX3aLPaVjj3ITT9mUSna7zThcd7V13p0pCg1FYqCv1E8sWsWc2eORxwzlX3yog=="],
 
