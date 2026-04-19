@@ -1,17 +1,11 @@
 import { ref, onMounted } from 'vue'
-import { useGraph, configure } from '@construct-space/graph'
+import { useGraph } from '@construct-space/graph'
 import { HighScore } from '../models/HighScore'
 
-// Host may supply a same-origin proxy URL that 405s on POST /graphql.
-// Force direct endpoint but forward host auth token (resolved lazily per call).
-configure({
-  url: 'https://graph.construct.space',
-  spaceId: 'pinball',
-  getAccessToken: async () => {
-    const c = (globalThis as { construct?: { auth?: { getAccessToken?: () => Promise<string | null> } } }).construct
-    return (await c?.auth?.getAccessToken?.()) ?? null
-  },
-})
+// SDK auto-configures from the host runtime (globalThis.construct): it reads
+// spaceId + the access-token getter, and it already defaults to the direct
+// graph URL. No manual configure() needed — leaving it out means this code
+// stays valid whether we ship graph behind a gateway or not.
 
 export interface HighScoreRow {
   id: string
